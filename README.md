@@ -9,7 +9,9 @@
 夜色水墨的桌面级写作工作台 —— 十二屏界面 + 一个跑在本机的 Node 后端<br />
 零前端依赖 · 零构建 · 数据与密钥都留在你自己的磁盘上
 
-[快速开始](#快速开始) · [界面巡览](#界面巡览) · [后端](#后端在做什么) · [数据与隐私](#数据与隐私)
+[🌐 在线预览](https://1842567940.github.io/ai-/) · [快速开始](#快速开始) · [界面巡览](#界面巡览) · [后端](#后端在做什么) · [数据与隐私](#数据与隐私)
+
+> 在线版是**静态界面预览**（Pages 跑不了 Node 后端）：十二屏都能点开看，但存作品、调模型需要在本机运行 `node qibi-server.cjs`。
 
 </div>
 
@@ -231,7 +233,9 @@ npx electron .
 
 ## 部署到 GitHub Pages
 
-仓库里带了 `.nojekyll`，可以直接开 Pages：**Settings → Pages → Deploy from a branch → `main` / `(root)`**。
+本仓库已开启 Pages，线上地址：**<https://1842567940.github.io/ai-/>**
+
+想在自己的 fork 上再开一份：**Settings → Pages → Deploy from a branch → `main` / `(root)` → Save**。仓库里带了 `.nojekyll`，中文文件名不会被打乱。
 
 但要说清楚：**Pages 只能放静态文件，跑不了 Node 后端**。所以在 Pages 上：
 
