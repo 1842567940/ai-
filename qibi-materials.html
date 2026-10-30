@@ -1,0 +1,969 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>启笔 QIBI · 素材库</title>
+<link rel="icon" type="image/png" href="app-icon.png" />
+<style>
+  /* ─── tokens — 沿用工作台 (ai-novel-editor-home.html) 的夜色水墨令牌 ──
+        素材库 = 左 rail（应用导航）· 中分类汇总 · 右素材卡片画廊。
+        夜的墨、纸白字、一点朱砂；一屏，仅分类栏与画廊各自滚动。 */
+  :root {
+    --bg:      oklch(15% 0.010 262);
+    --surface: oklch(23% 0.011 262);
+    --fg:      oklch(94% 0.006 90);
+    --muted:   oklch(73% 0.010 90);
+    --border:  oklch(96% 0.006 90 / 0.13);
+    --accent:  oklch(55% 0.17 28);
+
+    --ink-soft:      oklch(96% 0.006 90 / 0.055);
+    --ink-hair:      oklch(96% 0.006 90 / 0.16);
+    --ink-dash:      oklch(96% 0.006 90 / 0.26);
+    --accent-soft:   oklch(60% 0.17 28 / 0.17);
+    --accent-line:   oklch(62% 0.17 28 / 0.44);
+    --accent-ink:    oklch(98% 0.008 30);
+    --accent-deep:   oklch(47% 0.16 28);
+    --accent-bright: oklch(73% 0.15 32);
+    --scrim:         oklch(11% 0.012 262);
+
+    --font-display: 'Iowan Old Style', 'Charter', Georgia, 'Songti SC', 'STSong', 'Source Han Serif SC', 'Noto Serif SC', 'SimSun', serif;
+    --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    --font-mono:    ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+
+    --r-sm: 9px; --r-md: 12px; --r-lg: 15px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; overflow: hidden;
+    background: var(--bg); color: var(--fg);
+    font-family: var(--font-body); font-size: 14px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  .bg-photo {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: var(--bg) url("%E6%B0%B4%E5%A2%A8%E5%B0%91%E5%A5%B3-%E5%A4%9C%E8%89%B2.png") center / cover no-repeat;
+  }
+  .bg-scrim {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      linear-gradient(180deg, oklch(9% 0.012 262 / 0.05), transparent 60%, oklch(10% 0.012 262 / 0.03)),
+      linear-gradient(103deg, oklch(8% 0.012 262 / 0.05) 0%, oklch(10% 0.012 262 / 0.02) 52%, oklch(12% 0.012 262 / 0) 100%);
+  }
+  img, svg { display: block; max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  h1, h2, h3, h4, p { margin: 0; }
+  ::selection { background: var(--accent-soft); }
+
+  /* ─── shell ─────────────────────────────────────────────────────── */
+  .app {
+    position: relative; z-index: 1; height: 100vh;
+    display: grid;
+    grid-template-columns: 66px 268px minmax(0, 1fr);
+    grid-template-rows: 58px minmax(0, 1fr);
+  }
+  .appbar {
+    grid-column: 1 / -1; grid-row: 1;
+    display: flex; align-items: center; gap: 14px; padding: 0 18px 0 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--scrim);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; flex: none; }
+  .app-icon { width: 34px; height: 34px; flex: none; border-radius: 9px; object-fit: contain; box-shadow: 0 1px 3px oklch(0% 0 0 / 0.45), 0 0 0 1px var(--border); }
+  .brand-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: 0.02em; line-height: 1.1; }
+  .brand-sub { display: block; font-family: var(--font-mono); font-size: 8.5px; color: var(--muted); letter-spacing: 0.14em; margin-top: 1px; }
+  .crumb { display: flex; align-items: center; gap: 8px; flex: none; padding-left: 14px; border-left: 1px solid var(--border); font-size: 12.5px; color: var(--muted); }
+  .crumb-cur { color: var(--fg); font-weight: 500; }
+  .appbar-right { display: flex; align-items: center; gap: 9px; flex: none; margin-left: auto; }
+  .search { display: flex; align-items: center; gap: 8px; width: 246px; padding: 6px 11px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); background: var(--surface); }
+  .search svg { width: 15px; height: 15px; flex: none; }
+  .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--fg); font: inherit; font-size: 12.5px; }
+  .search input::placeholder { color: var(--muted); }
+  .search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .icon-btn { width: 36px; height: 36px; border-radius: var(--r-sm); flex: none; position: relative; display: grid; place-items: center; background: transparent; border: 1px solid var(--border); color: var(--muted); transition: background .14s, color .14s, border-color .14s; }
+  .icon-btn:hover { background: var(--ink-soft); color: var(--fg); border-color: var(--ink-hair); }
+  .icon-btn svg { width: 17px; height: 17px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 15px; border-radius: var(--r-sm); border: 1px solid transparent; font-size: 13.5px; font-weight: 500; transition: background .15s, border-color .15s, color .15s, transform .05s; }
+  .btn:active { transform: translateY(1px); }
+  .btn svg { width: 15px; height: 15px; }
+  .btn-ghost { background: transparent; border-color: var(--border); color: var(--fg); }
+  .btn-ghost:hover { background: var(--ink-soft); border-color: var(--ink-hair); }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn-primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); }
+  .btn-sm { padding: 6px 12px; font-size: 12.5px; }
+  :where(.btn, .icon-btn, .rail-btn, .mnav-item, .mcard, .mcard-face):focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
+
+  /* ─── left rail ──────────────────────────────────────────────────── */
+  .rail { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 12px 0 14px; overflow: hidden; border-right: 1px solid var(--border); background: color-mix(in oklch, var(--scrim) 34%, transparent); }
+  .rail-btn { width: 54px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; border-radius: 12px; border: 1px solid transparent; background: transparent; color: var(--muted); font-size: 10px; letter-spacing: 0.02em; transition: background .14s, color .14s, border-color .14s; }
+  .rail-btn svg { width: 19px; height: 19px; }
+  .rail-btn:hover { background: var(--ink-soft); color: var(--fg); }
+  .rail-btn.is-active { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-bright); }
+  .rail-spacer { flex: 1; }
+  .rail-avatar { width: 34px; height: 34px; border-radius: 999px; flex: none; display: grid; place-items: center; color: var(--muted); background: var(--ink-soft); border: 1px dashed var(--ink-dash); }
+  .rail-avatar svg { width: 17px; height: 17px; }
+
+  /* ─── 分类汇总 column ────────────────────────────────────────────── */
+  .matnav { grid-column: 2; grid-row: 2; min-height: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: color-mix(in oklch, var(--scrim) 26%, transparent); }
+  .matnav-head { flex: none; display: flex; align-items: center; gap: 10px; padding: 15px 16px 12px; border-bottom: 1px solid var(--border); }
+  .matnav-title { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: 0.06em; }
+  .matnav-sub { font-family: var(--font-mono); font-size: 9.5px; color: var(--muted); letter-spacing: 0.1em; margin-left: auto; }
+  .matnav-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px 10px 20px; scrollbar-width: thin; scrollbar-color: var(--ink-hair) transparent; }
+  .matnav-scroll::-webkit-scrollbar { width: 8px; }
+  .matnav-scroll::-webkit-scrollbar-thumb { background: var(--ink-hair); border-radius: 999px; }
+  .mnav-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 9px; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--fg); transition: background .14s, color .14s; }
+  .mnav-item:hover { background: var(--ink-soft); }
+  .mnav-item .ic { width: 26px; height: 26px; flex: none; border-radius: 8px; display: grid; place-items: center; background: var(--ink-soft); color: var(--muted); transition: color .14s; }
+  .mnav-item .ic svg { width: 15px; height: 15px; }
+  .mnav-item:hover .ic { color: var(--fg); }
+  .mnav-item .t { flex: 1; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mnav-item .n { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+  .mnav-item.is-on { background: var(--accent-soft); }
+  .mnav-item.is-on .ic { color: var(--accent-bright); }
+  .mnav-item.is-on .t { color: var(--accent-bright); }
+  .mnav-item.is-on .n { color: var(--accent-bright); opacity: .85; }
+  .mnav-sep { height: 1px; margin: 7px 9px; background: var(--border); }
+
+  /* ─── 素材画廊 ───────────────────────────────────────────────────── */
+  .mats { grid-column: 3; grid-row: 2; min-height: 0; display: flex; flex-direction: column; background: color-mix(in oklch, var(--scrim) 24%, transparent); }
+  .mats-head { flex: none; display: flex; align-items: flex-end; gap: 14px; padding: 22px 40px 16px; border-bottom: 1px solid var(--border); }
+  .mats-h { font-family: var(--font-display); font-size: 23px; font-weight: 600; letter-spacing: 0.03em; }
+  .mats-sub { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .mats-head .spacer { flex: 1; }
+  .mats-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 24px 40px 64px; scrollbar-width: thin; scrollbar-color: var(--ink-hair) transparent; }
+  .mats-scroll::-webkit-scrollbar { width: 8px; }
+  .mats-scroll::-webkit-scrollbar-thumb { background: var(--ink-hair); border-radius: 999px; }
+  .mg { margin-bottom: 30px; }
+  .mg:last-child { margin-bottom: 0; }
+  .mg-h { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
+  .mg-h .mark { width: 6px; height: 6px; flex: none; border-radius: 1px; background: var(--fg); opacity: .5; transform: rotate(45deg); }
+  .mg-h .nm { font-family: var(--font-display); font-size: 14px; font-weight: 600; letter-spacing: 0.06em; }
+  .mg-h .line { flex: 1; min-width: 10px; height: 1px; background: var(--border); }
+  .mg-h .n { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+  .mg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 12px; }
+  .mg-sub { margin-top: 16px; }
+  .mg-h + .mg-sub { margin-top: 0; }
+  .mg-sub-h { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+  .mg-sub-h span { font-family: var(--font-display); font-size: 12.5px; font-weight: 600; letter-spacing: 0.05em; color: var(--fg); }
+  .mg-sub-h span::before { content: ""; display: inline-block; width: 12px; height: 1px; margin-right: 7px; vertical-align: middle; background: var(--accent-line); }
+  .mg-sub-h em { font-style: normal; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.06em; color: var(--muted); }
+  .mg-sub-h i { flex: 1; height: 1px; background: var(--border); }
+  .mg-sub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 12px; }
+
+  .mcard { position: relative; display: flex; border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; background: color-mix(in oklch, var(--surface) 68%, transparent); transition: border-color .14s, background .14s, transform .14s; }
+  .mcard:hover { border-color: var(--ink-hair); background: color-mix(in oklch, var(--surface) 88%, transparent); transform: translateY(-2px); }
+  .mcard.is-open { border-color: var(--accent-line); }
+  .mcard-face { flex: 1; display: flex; flex-direction: column; gap: 9px; padding: 15px 16px; cursor: pointer; }
+  .mcard-top { display: flex; align-items: center; gap: 10px; }
+  .mcard-ic { width: 32px; height: 32px; flex: none; border-radius: 9px; display: grid; place-items: center; background: var(--ink-soft); color: var(--muted); transition: color .14s; }
+  .mcard-ic svg { width: 17px; height: 17px; }
+  .mcard:hover .mcard-ic { color: var(--fg); }
+  .mcard-tag { margin-left: auto; font-family: var(--font-mono); font-size: 9.5px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+  .mcard-t { font-family: var(--font-display); font-size: 15.5px; font-weight: 600; letter-spacing: 0.02em; }
+  .mcard-d { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .mcard-foot { margin-top: auto; display: flex; align-items: center; gap: 6px; padding-top: 9px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+  .mcard-foot b { font-family: var(--font-mono); font-weight: 500; color: var(--fg); }
+  .mcard-foot .go { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; color: var(--accent-bright); opacity: 0; transition: opacity .14s; }
+  .mcard-foot .go svg { width: 12px; height: 12px; }
+  .mcard:hover .mcard-foot .go { opacity: 1; }
+
+  .mcard-detail { position: absolute; inset: 0; display: none; flex-direction: column; gap: 8px; padding: 15px 16px; background: color-mix(in oklch, var(--scrim) 90%, var(--surface)); overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--ink-hair) transparent; }
+  .mcard.is-open .mcard-detail { display: flex; }
+  .mcard.is-open .mcard-face { visibility: hidden; }
+  .mcard-detail .k { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em; color: var(--accent-bright); }
+  .mcard-empty { font-size: 11.5px; color: var(--muted); line-height: 1.55; border: 1px dashed var(--ink-dash); border-radius: var(--r-sm); padding: 10px 11px; margin-top: 2px; }
+  .mcard-acts { margin-top: auto; display: flex; gap: 8px; flex-wrap: wrap; padding-top: 8px; }
+  .mcard-acts .btn { flex: 1; }
+
+  /* 素材条目 + 细分 */
+  .ment-list { display: flex; flex-direction: column; gap: 7px; }
+  .ment-sub { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; margin-top: 3px; }
+  .ment { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 8px 26px 8px 10px; border: 1px solid var(--border); border-radius: var(--r-sm); background: color-mix(in oklch, var(--surface) 60%, transparent); }
+  .ment-t { font-size: 12.5px; color: var(--fg); }
+  .ment-b { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .ment-x { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--muted); }
+  .ment-x:hover { background: var(--ink-soft); color: var(--fg); }
+  .ment-x svg { width: 12px; height: 12px; }
+
+  /* 内联新建素材表单 */
+  .medit { display: none; flex-direction: column; gap: 7px; border: 1px dashed var(--ink-dash); border-radius: var(--r-sm); padding: 10px; }
+  .mcard.is-adding .medit { display: flex; }
+  .medit input, .medit textarea { font: inherit; font-size: 12px; color: var(--fg); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 7px 9px; width: 100%; }
+  .medit textarea { resize: none; line-height: 1.5; }
+  .medit input:focus, .medit textarea:focus { outline: 0; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .medit-acts { display: flex; gap: 8px; }
+  .medit-acts .btn { flex: 1; }
+
+  /* 导航：自定义入口 */
+  .mnav-new { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; padding: 10px 9px; margin-top: 2px; border: 1px dashed var(--ink-dash); border-radius: var(--r-sm); background: transparent; color: var(--accent-bright); font-size: 12.5px; transition: background .14s; }
+  .mnav-new:hover { background: var(--accent-soft); }
+  .mnav-new svg { width: 15px; height: 15px; }
+
+  /* 新建素材弹层 */
+  .modal { position: fixed; inset: 0; z-index: 90; display: none; place-items: center; padding: 24px; background: color-mix(in oklch, var(--scrim) 72%, transparent); }
+  .modal.open { display: grid; }
+  .modal-card { width: min(460px, 100%); max-height: 88vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: 0 24px 60px oklch(0% 0 0 / 0.5); padding: 22px 22px 18px; scrollbar-width: thin; scrollbar-color: var(--ink-hair) transparent; }
+  .modal-h { font-family: var(--font-display); font-size: 18px; font-weight: 600; letter-spacing: 0.03em; }
+  .modal-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .modal-body { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+  .fld { display: flex; flex-direction: column; gap: 5px; }
+  .fld > span { font-size: 11.5px; color: var(--muted); }
+  .fld input, .fld select, .fld textarea { font: inherit; font-size: 13px; color: var(--fg); background: color-mix(in oklch, var(--bg) 55%, var(--surface)); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 9px 11px; width: 100%; }
+  .fld textarea { resize: none; line-height: 1.55; }
+  .fld select { appearance: none; cursor: pointer; }
+  .fld input:focus, .fld select:focus, .fld textarea:focus { outline: 0; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .modal-acts { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; }
+
+  .gal-empty { display: grid; place-items: center; gap: 8px; padding: 70px 20px; color: var(--muted); text-align: center; }
+  .gal-empty svg { width: 30px; height: 30px; opacity: .6; }
+  .gal-empty p { font-size: 13px; }
+
+  /* ─── popover + toast ────────────────────────────────────────────── */
+  .rel { position: relative; }
+  .pop { position: absolute; top: 46px; right: 0; width: 280px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: 0 16px 40px oklch(0% 0 0 / 0.45); padding: 7px; z-index: 60; display: none; }
+  .pop.open { display: block; }
+  .pop-empty { padding: 22px 16px; text-align: center; font-size: 12.5px; color: var(--muted); border: 1px dashed var(--ink-dash); border-radius: var(--r-sm); }
+  .toast { position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 14px); z-index: 80; display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--accent-line); background: color-mix(in oklch, var(--scrim) 88%, var(--accent-soft)); color: var(--fg); font-size: 12.5px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .toast i { width: 6px; height: 6px; border-radius: 999px; background: var(--accent-bright); }
+
+  /* ─── adapt ──────────────────────────────────────────────────────── */
+  @media (max-width: 1240px) { .app { grid-template-columns: 62px 236px minmax(0, 1fr); } .mats-head { padding-left: 30px; padding-right: 30px; } .mats-scroll { padding-left: 30px; padding-right: 30px; } }
+  @media (max-width: 980px) { .app { grid-template-columns: 60px minmax(0, 1fr); } .matnav { display: none; } .mats-head { padding: 16px 22px 13px; } .mats-scroll { padding: 18px 22px 54px; } }
+  @media (max-width: 620px) { .app { grid-template-columns: 60px minmax(0, 1fr); } .search { width: 150px; } .crumb { display: none; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="bg-photo" aria-hidden="true"></div>
+<div class="bg-scrim" aria-hidden="true"></div>
+
+<div class="app">
+
+  <header class="appbar" data-od-id="appbar">
+    <div class="brand">
+      <img class="app-icon" src="app-icon.png" width="34" height="34" alt="" />
+      <span>
+        <span class="brand-name">启笔</span>
+        <span class="brand-sub">QIBI · AI 小说编辑器</span>
+      </span>
+    </div>
+    <nav class="crumb" data-od-id="breadcrumb">
+      <span>工作台</span>
+      <span>/</span>
+      <span class="crumb-cur">素材库</span>
+    </nav>
+
+    <div class="appbar-right">
+      <label class="search" title="搜索素材类型">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input id="q" type="search" placeholder="搜索素材类型" aria-label="搜索素材类型" />
+      </label>
+      <div class="rel">
+        <button class="icon-btn" id="bell" aria-label="通知" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+        </button>
+        <div class="pop" id="bellPop" role="menu"><div class="pop-empty">暂无新通知</div></div>
+      </div>
+      <button class="btn btn-primary btn-sm" id="newMat" data-od-id="cta-new-material">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        新建素材
+      </button>
+    </div>
+  </header>
+
+  <nav class="rail" data-od-id="rail" aria-label="应用导航">
+    <a class="rail-btn" href="ai-novel-editor-home.html#free" title="创作">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M19.5 4.5c-5.6.2-9.8 3.5-11 8.8l-3.2 3.2 1.2 1.2 3.2-3.2c5.3-1.2 8.6-5.4 8.8-11z"/><path d="M5.5 18.5 11 13"/><path d="M4 20h4"/></svg>
+      <span>创作</span>
+    </a>
+    <a class="rail-btn" href="qibi-memoir.html" title="自传">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5.8 4.5h10.4a2 2 0 0 1 2 2v13H5.8z"/><path d="M5.8 17.5h12.4"/><path d="M9.2 4.5v5.6l1.9-1.4 1.9 1.4V4.5"/></svg>
+      <span>自传</span>
+    </a>
+    <a class="rail-btn" href="qibi-transmigration.html" title="穿书">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 6.9C9.9 5.3 7.3 4.8 4.5 5.3v12.9c2.8-.5 5.4 0 7.5 1.6 2.1-1.6 4.7-2.1 7.5-1.6V5.3c-2.8-.5-5.4 0-7.5 1.6z"/><path d="M12 6.9v12.9"/><path d="M12 2.6v4.6M10.2 5.4 12 7.2l1.8-1.8"/></svg>
+      <span>穿书</span>
+    </a>
+    <a class="rail-btn" href="ai-novel-editor-home.html#tools" title="工具箱">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14.7 6.3a3.5 3.5 0 0 1-4.6 4.6L5 16v3h3l5.1-5.1a3.5 3.5 0 0 1 4.6-4.6l-2 2 .7 1.4 1.4.7z"/></svg>
+      <span>工具箱</span>
+    </a>
+    <a class="rail-btn" href="ai-novel-editor-home.html#works" title="作品">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h5v12H4zM9 7h5v12H9z"/><path d="M15.4 8.4l3.8 1-3 10.6-3.8-1z"/></svg>
+      <span>作品</span>
+    </a>
+    <a class="rail-btn" href="qibi-stats.html" title="统计">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 20V10M12 20V4M19 20v-6"/></svg>
+      <span>统计</span>
+    </a>
+    <a class="rail-btn" href="qibi-accounts.html" title="账号管理">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3.2" y="5" width="17.6" height="14" rx="2.2"/><circle cx="8.6" cy="11" r="2.2"/><path d="M5.6 16.4c.6-1.7 1.7-2.5 3-2.5s2.4.8 3 2.5"/><path d="M14.5 10h3.9M14.5 13h3.9"/></svg>
+      <span>账号管理</span>
+    </a>
+    <button class="rail-btn is-active" aria-current="page" title="素材库">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 8h16v11H4z"/><path d="M4 8l2-3h12l2 3M9 12h6"/></svg>
+      <span>素材库</span>
+    </button>
+    <a class="rail-btn" href="ai-novel-editor-home.html#config" title="设置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4 6 18M18 18l-1.6-1.6M7.6 7.6 6 6"/></svg>
+      <span>设置</span>
+    </a>
+    <span class="rail-spacer"></span>
+    <span class="rail-avatar" title="未设置头像" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="9" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg>
+    </span>
+  </nav>
+
+  <nav class="matnav" data-od-id="materials-nav" aria-label="素材分类">
+    <div class="matnav-head">
+      <span class="matnav-title">素材库</span>
+      <span class="matnav-sub" id="navSub">— 项 · — 类</span>
+    </div>
+    <div class="matnav-scroll" id="navWrap"></div>
+  </nav>
+
+  <main class="mats" data-od-id="materials-gallery">
+    <div class="mats-head">
+      <div>
+        <h1 class="mats-h" id="matsH">全部素材</h1>
+        <p class="mats-sub" id="matsSub">按题材归类的可复用写作素材 · 点卡片在原位展开</p>
+      </div>
+      <span class="spacer"></span>
+    </div>
+    <div class="mats-scroll" id="galWrap"></div>
+  </main>
+
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><i></i><span id="toastTx"></span></div>
+
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalH">
+    <h2 class="modal-h" id="modalH">新建素材</h2>
+    <p class="modal-sub">在已有的分类与类型下新增一条素材；细分可自由填写，便于再归档。要加新的类型，请用左栏的「自定义类型」。</p>
+    <div class="modal-body">
+      <label class="fld"><span>分类</span><select id="fCat"></select></label>
+      <label class="fld" id="fNewCatWrap"><span>新分类名</span><input id="fNewCat" placeholder="如：我的素材" /></label>
+      <label class="fld"><span>素材类型</span><select id="fType"></select></label>
+      <label class="fld" id="fNewTypeWrap"><span>新类型名</span><input id="fNewType" placeholder="如：原创设定" /></label>
+      <label class="fld"><span>细分</span><input id="fSub" list="msubList" placeholder="可自定义，如：角色 / 场景 / 台词" /><datalist id="msubList"></datalist></label>
+      <label class="fld"><span>素材标题</span><input id="fTitle" placeholder="如：雨夜重逢的台词" /></label>
+      <label class="fld"><span>素材内容</span><textarea id="fBody" rows="3" placeholder="可留空"></textarea></label>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost btn-sm" id="mCancel" type="button">取消</button>
+      <button class="btn btn-primary btn-sm" id="mSave" type="button">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="typeModal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="typeModalH">
+    <h2 class="modal-h" id="typeModalH">自定义类型</h2>
+    <p class="modal-sub">在任意分类下新增一个素材类型；也可先新建分类再归入。</p>
+    <div class="modal-body">
+      <label class="fld"><span>分类</span><select id="tCat"></select></label>
+      <label class="fld" id="tNewCatWrap"><span>新分类名</span><input id="tNewCat" placeholder="如：我的素材" /></label>
+      <label class="fld"><span>类型名</span><input id="tType" placeholder="如：原创设定" /></label>
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost btn-sm" id="tCancel" type="button">取消</button>
+      <button class="btn btn-primary btn-sm" id="tSave" type="button">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* ── 图标池：内联单线 SVG，按序号取用 ───────────────────────────── */
+  function svg(inner) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">' + inner + '</svg>'; }
+  var ICONS = [
+    '<path d="M5 4h11a2 2 0 0 1 2 2v14H6a1 1 0 0 1-1-1z"/><path d="M9 8h6M9 12h4"/>',
+    '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+    '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4h-4"/>',
+    '<path d="M3 17l5-6 4 3 5-8"/><path d="M3 21h18"/>',
+    '<circle cx="12" cy="8" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/>',
+    '<path d="M7 12a3 3 0 1 0 3-3c-2 0-3 3-5 3s-3-3-1-4 4 1 5 3 3 3 5 3a3 3 0 1 0-1-5"/>',
+    '<path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.6-7 9-7 9z"/>',
+    '<path d="M13 3 5 14h6l-1 7 8-11h-6z"/>',
+    '<path d="M20 4 9 15"/><path d="M15 4h5v5"/><path d="M4 20l3-1 6-6"/>',
+    '<circle cx="12" cy="12" r="4"/><ellipse cx="12" cy="12" rx="9" ry="3.4"/>',
+    '<path d="M5 20V9l7-5 7 5v11"/><path d="M9 20v-6h6v6"/>',
+    '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-3.6-3.6"/>',
+    '<path d="M12 3l7 3v6c0 4-3 6.5-7 8-4-1.5-7-4-7-8V6z"/>',
+    '<circle cx="8" cy="9" r="2.6"/><circle cx="16" cy="9" r="2.6"/><path d="M3.5 18a4.5 4.5 0 0 1 9 0M11.5 18a4.5 4.5 0 0 1 9 0"/>',
+    '<path d="M3 12h4l2-6 4 12 2-6h6"/>',
+    '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 10v10"/>',
+    '<path d="M12 3.5l2.5 5.2 5.7.8-4.1 4 1 5.6-5.1-2.7-5.1 2.7 1-5.6-4.1-4 5.7-.8z"/>',
+    '<path d="M6 3h12v18l-6-4.5L6 21z"/>',
+    '<path d="M4 6h16v9H9l-4 4z"/><path d="M8 10h8"/>',
+    '<path d="M12 21s-6.5-5.4-6.5-10a6.5 6.5 0 0 1 13 0c0 4.6-6.5 10-6.5 10z"/><circle cx="12" cy="11" r="2.4"/>'
+  ];
+  function icon(i) { return svg(ICONS[i % ICONS.length]); }
+
+  /* ── 素材分类（与工作台目录同源：12 类 · 179 型，模板合为一类内部细分） ── */
+  var DATA = [
+    { g: '灵感速记', ic: 7, items: [
+      '灵感片段|随时记下的火花','灵感收集箱|零散点子的归处','梦的记录|醒来即记下的梦','一闪而过|转瞬即逝的念头',
+      '一句话灵感|一行字种下一本书','灵感关键词|由词生发的组合','随机灵感|抽签式给你提示','灵感图|触发灵感的图片',
+      '参考图|人物与场景的参考','天气物候|时令、气候与天象','意象库|贯穿全书的象征物'
+    ]},
+    { g: '伏笔与线索', ic: 5, items: [
+      '待用伏笔|留着以后回收的梗','伏笔清单|所有待回收的梗','回收清单|已埋待收的线索','母题清单|可反复书写的主题',
+      '矛盾清单|可用的核心冲突','欲望与恐惧|驱动人物的内因'
+    ]},
+    { g: '金句与台词', ic: 18, items: [
+      '金句摘录|收集可用的好句子','台词库|可复用的人物台词','语录|一行直击人心的句子','修辞句|比喻、排比与通感',
+      '摘抄本|舍不得划走的一句','常用片段|反复会用到的段子'
+    ]},
+    { g: '描写范例', ic: 8, items: [
+      '环境描写|可套用的景物笔墨','人物描写|外貌与气质的写法','心理描写|内心活动的范例','动作描写|打斗与日常的动作',
+      '打斗描写|过招与场面的节奏','对话范例|语气与口吻参考','场面描写|群戏与环境的调度','声音描写|听觉画面的素材',
+      '气味描写|鼻尖上的记忆','触感描写|冷热与质地的细节','心理独白|第一人称的内心戏','书信范例|信件与留言的腔调',
+      '场景速写|环境描写的现成片段','镜头语言|分镜式的叙述写法'
+    ]},
+    { g: '桥段套路', ic: 15, items: [
+      '名场面|高光桥段随手存档','桥段模板|可复用的叙事结构','剧情套路|常见且好用的模式','反转套路|制造意外的写法',
+      '打脸桥段|痛快反击的写法','追妻桥段|悔悟与挽回的桥段','相遇桥段|初见的多种写法','表白桥段|捅破窗户纸的写法',
+      '分别桥段|离别与目送的写法','重逢桥段|久别重逢的写法','误会桥段|制造错位的写法','和解桥段|冰释前嫌的写法',
+      '危机桥段|把人物逼到绝境','高潮设计|全书最亮的时刻','开头模板|多种小说开头范式','结尾模板|收束与留白的方式',
+      '章节钩子|让读者想点下一章'
+    ]},
+    { g: '模板', ic: 15, items: [
+      '开源整本仿写样本|完整开源作品，可整本作为仿写蓝本|通用','场景模板|常用场景可直接套用|通用','桥段模板|可复用的叙事结构|通用',
+      '开场模板|多种小说开头范式|通用','结尾模板|收束与留白的方式|通用','章节钩子|让读者想点下一章|通用',
+      '黄金三章模板|前三章定生死，钩子、冲突、爽点齐备|爆款开场','悬念开场模板|一上来就抛出一个说不清的疑点|爆款开场',
+      '冲突开场模板|开篇即矛盾，主角被逼到台前|爆款开场','反差开场模板|先立人设，再一句话推翻|爆款开场',
+      '场景代入开场|以一段感官场景把读者拽进去|爆款开场','一句话钩子|用一句反常的话勾住好奇心|爆款开场',
+      '反转开场模板|开头即反转，先给出意外结论|爆款开场',
+      '打脸爽点模板|先被看轻，随后当众翻盘|爽点与打脸','逆袭爽点模板|从无到有，步步兑现期待|爽点与打脸',
+      '装逼打脸模板|低调铺垫、高光打脸|爽点与打脸','先抑后扬模板|把期待压到最低再给爆发|爽点与打脸',
+      '连环爽点模板|一波未平一波又起的节奏|爽点与打脸','期待感蓄力|延后满足，把爽点攒到最高|爽点与打脸',
+      '废柴崛起模板|开局最弱，一路向上|成长与逆袭','扮猪吃虎模板|藏起实力，后发制人|成长与逆袭',
+      '隐藏实力模板|明面平庸，暗处惊人|成长与逆袭','金手指觉醒模板|关键节点获得转折性能力|成长与逆袭',
+      '绝境翻盘模板|退无可退处的逆转|成长与逆袭','打怪升级模板|以战斗推动成长的清晰曲线|成长与逆袭',
+      '先婚后爱模板|从契约到真心的关系升温|情感与关系','追妻火葬场|先轻慢后追悔的情绪落差|情感与关系',
+      '破镜重圆模板|分开之后的重逢与和解|情感与关系','双向暗恋模板|两边都在藏，读者先知道|情感与关系',
+      '契约恋爱模板|以约定为壳、以真心为核|情感与关系','白月光回归|旧人来信，新的波澜|情感与关系',
+      '团宠模板|被众人偏爱的反差感|情感与关系',
+      '开篇抛尸模板|一具尸体掀开整个谜面|悬疑与钩子','倒叙悬念模板|先给结局，再一步步靠近|悬疑与钩子',
+      '密室困局模板|封闭空间里逼出真相|悬疑与钩子','身份谜团模板|主角是一切的谜底|悬疑与钩子',
+      '规则怪谈模板|读出规则、利用规则、打破规则|悬疑与钩子','连续反转模板|每章一次翻转，逼读者猜错|悬疑与钩子',
+      '系统面板模板|数值、任务与兑换一目了然|系统与金手指','签到打卡模板|日常积累换来关键奖励|系统与金手指',
+      '商城兑换模板|以资源置换能力|系统与金手指','抽奖开箱模板|可控随机带来的期待感|系统与金手指',
+      '属性加点模板|把成长写成可分配的选择|系统与金手指','任务奖励模板|有目标就有即时反馈|系统与金手指',
+      '连环打脸模板|对手一批批被逐一击破|冲突与升级','势力对抗模板|小人物卷入大格局的博弈|冲突与升级',
+      '极限压迫模板|退路被封，压力层层加码|冲突与升级','绝地求生模板|在不可能中找出一条生路|冲突与升级',
+      '无间反转模板|敌我身份在关键处翻转|冲突与升级',
+      '大团圆模板|各得其所，圆满落幕|结尾收束','留白式结局|把想象留给读者|结尾收束',
+      '反转收尾模板|最后一句话改写全局|结尾收束','轮回闭环模板|首尾呼应，走出一个圆|结尾收束',
+      '意难平收束|留下一点不甘心的余味|结尾收束',
+      '番茄爆款结构|强钩子、高密度、快节奏|平台爆款结构','七猫爆款结构|爽点密集、章节短平快|平台爆款结构',
+      '起点爆款结构|世界观与成长的长期铺陈|平台爆款结构','短剧式强钩模板|每话结尾一个悬念|平台爆款结构',
+      '一话一钩模板|单章自成闭环又勾下章|平台爆款结构'
+    ]},
+    { g: '人物素材', ic: 4, items: [
+      '人物原型|性格原型与标签库','人物名字|按风格分组的名字','姓名学|字义与搭配的讲究','人物小传库|现成的人物底稿',
+      '反派动机库|让坏人有道理','群像设定集|配角群像的底稿','别名绰号库|江湖与市井的绰号'
+    ]},
+    { g: '命名与风物', ic: 20, items: [
+      '地名风物|城邦、山川与风土','城邦设定|城市的规模与风气','山川河流|自然地形的取名与描写','建筑样式|各时代的建筑与风格',
+      '建筑名库|殿宇楼阁的名字','花草虫鱼|动植物的名称与意象','飞禽走兽|动物的习性与象征','组织名号库|门派与团体的名字',
+      '招式名库|功法与技能的名目','法宝名库|器物与兵器的名字','丹药名库|药物与丹药的名目','灵兽名库|契约与野生的兽类'
+    ]},
+    { g: '器物与生活', ic: 19, items: [
+      '服饰器物|时代考据与细节','器械兵器|冷兵器与火器的谱系','道具设定|器物、技能与法宝','食物菜品|菜系与饮食细节',
+      '节日习俗|节庆、礼仪与禁忌','方言口音|地域口音的写法','称谓职官|称呼、官制与礼数','礼仪规范|各场合的举止分寸',
+      '科举制度|制度流程的常识','货币度量|单位、换算与购买力','车马舟船|交通与出行的细节','年代细节|各时代的日常物件',
+      '时代禁忌|各时代的言行雷区'
+    ]},
+    { g: '典籍与掌故', ic: 0, items: [
+      '诗词典故|可引用的典章出处','历史事件|可作为背景的史实','成语典故|成语背后的故事','神话传说|各民族的神话母题',
+      '民俗禁忌|民间的规矩与忌讳','天文历法|星象与岁时的常识','参考书单|同类作品与资料','同类作品|题材相近的参照',
+      '对标作品|想要超越的目标','阅读笔记|读书时的摘记'
+    ]},
+    { g: '专业术语', ic: 9, items: [
+      '医药常识|伤病与救治的细节','中医术语|脉理与方剂的词库','武侠招式|功法的名目与描写','军事阵法|兵种与阵型的设定',
+      '冷兵器知识|刀剑枪棍的讲究','火器知识|火药与枪炮的沿革','星象占卜|命理与卜筮的术语','宗教仪轨|仪式的流程与器物',
+      '法律条文|可援引的律令框架','刑侦常识|侦查流程与手段','法医常识|验伤与死亡推断','黑客术语|网络安全的名词',
+      '编程术语|代码世界的行话','金融术语|投资与交易的行话','电竞术语|比赛与战术的行话'
+    ]},
+    { g: '资料与归档', ic: 12, items: [
+      '资料卡|按主题归档的知识','地图底稿|可继续绘制的地图','时间轴底稿|铺开的故事线','设定索引|按关键词检索设定',
+      '词条卡|专有名词的卡片','素材标签|给素材打上标签','收藏夹|分类整理的心头好','分类归档|按题材与用途整理',
+      '世界观素材|可直接拼装的设定块'
+    ]}
+  ];
+
+  var NAV_IC = 10;
+
+  /* ── 状态：可自定义分类 / 类型 / 细分 / 素材条目 ─────────────────── */
+  var KEY = 'qibi.materials.state';
+  var state = { cat: '*', customCats: [], customTypes: {}, entries: {} };
+  var QB_PROJ = ''; try { QB_PROJ = new URLSearchParams(location.search).get('project') || localStorage.getItem('qibi.project') || ''; } catch (e) {}
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) {
+      var p = JSON.parse(raw);
+      if (p && typeof p === 'object') {
+        if (p.cat) state.cat = p.cat;
+        if (Array.isArray(p.customCats)) state.customCats = p.customCats;
+        if (p.customTypes && typeof p.customTypes === 'object') state.customTypes = p.customTypes;
+        if (p.entries && typeof p.entries === 'object') state.entries = p.entries;
+      }
+    }
+  } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function keyOf(c, t) { return c + '||' + t; }
+  function getCats() {
+    var cats = DATA.map(function (g) {
+      return { g: g.g, ic: g.ic, custom: false, types: g.items.map(function (it) { var q = it.split('|'); return { t: q[0], d: q[1] || '', sub: q[2] || '' }; }) };
+    });
+    cats.forEach(function (c) { var ex = state.customTypes[c.g]; if (ex && ex.length) c.types = c.types.concat(ex); });
+    (state.customCats || []).forEach(function (c) {
+      cats.push({ g: c.g, ic: (typeof c.ic === 'number' ? c.ic : 1), custom: true, types: (c.types || []).slice() });
+    });
+    return cats;
+  }
+  function findCat(cats, name) { for (var i = 0; i < cats.length; i++) { if (cats[i].g === name) return cats[i]; } return null; }
+  function totalTypes(cats) { var n = 0; cats.forEach(function (c) { n += c.types.length; }); return n; }
+  function entriesOf(c, t) { return (state.entries && state.entries[keyOf(c, t)]) || []; }
+  function isCustomType(cName, tName) {
+    var cc = (state.customCats || []).filter(function (x) { return x.g === cName; })[0];
+    if (cc) return (cc.types || []).some(function (t) { return t.t === tName; });
+    var arr = (state.customTypes || {})[cName];
+    return !!(arr && arr.some(function (t) { return t.t === tName; }));
+  }
+  function ensureType(cName, tName) {
+    var cc = (state.customCats || []).filter(function (x) { return x.g === cName; })[0];
+    if (cc) { cc.types = cc.types || []; if (!cc.types.some(function (t) { return t.t === tName; })) cc.types.push({ t: tName, d: '' }); return; }
+    if (DATA.some(function (g) { return g.g === cName; })) {
+      state.customTypes = state.customTypes || {};
+      var arr = state.customTypes[cName] = state.customTypes[cName] || [];
+      if (!arr.some(function (t) { return t.t === tName; })) arr.push({ t: tName, d: '' });
+      return;
+    }
+    state.customCats = state.customCats || [];
+    state.customCats.push({ g: cName, ic: 1, types: [{ t: tName, d: '' }] });
+  }
+
+  var navWrap = document.getElementById('navWrap');
+  var galWrap = document.getElementById('galWrap');
+  var navSub = document.getElementById('navSub');
+  var matsH = document.getElementById('matsH');
+  var matsSub = document.getElementById('matsSub');
+  var qInput = document.getElementById('q');
+  if (state.cat !== '*' && !findCat(getCats(), state.cat)) state.cat = '*';
+
+  /* ── 分类汇总（全部 + 各分类 + 自定义入口） ──────────────────────── */
+  function buildNav() {
+    var cats = getCats();
+    var total = totalTypes(cats);
+    var out = '<button class="mnav-item' + (state.cat === '*' ? ' is-on' : '') + '" data-cat="*">'
+      + '<span class="ic">' + svg(ICONS[NAV_IC]) + '</span>'
+      + '<span class="t">全部素材</span><span class="n">' + total + '</span></button>'
+      + '<div class="mnav-sep"></div>';
+    cats.forEach(function (c) {
+      out += '<button class="mnav-item' + (state.cat === c.g ? ' is-on' : '') + '" data-cat="' + esc(c.g) + '">'
+        + '<span class="ic">' + icon(c.ic) + '</span>'
+        + '<span class="t">' + esc(c.g) + '</span><span class="n">' + c.types.length + '</span></button>';
+    });
+    out += '<div class="mnav-sep"></div><button class="mnav-new" id="navNewType">' + svg('<path d="M12 5v14M5 12h14"/>') + '自定义类型</button>';
+    navWrap.innerHTML = out;
+    navSub.textContent = total + ' 型 · ' + cats.length + ' 类';
+  }
+
+  /* ── 画廊渲染 ───────────────────────────────────────────────────── */
+  function match(it, q) {
+    if (!q) return true;
+    var parts = it.split('|');
+    return (parts[0] + ' ' + (parts[1] || '')).toLowerCase().indexOf(q) >= 0;
+  }
+  function entryListHTML(cName, tName) {
+    var es = entriesOf(cName, tName);
+    if (!es.length) return '<p class="mcard-empty">此类型暂无素材，点「新建素材」开始积累。</p>';
+    var groups = {}, order = [];
+    es.forEach(function (e) { var s = e.sub || '未细分'; if (!groups[s]) { groups[s] = []; order.push(s); } groups[s].push(e); });
+    var html = '<div class="ment-list">';
+    order.forEach(function (s) {
+      html += '<div class="ment-sub">' + esc(s) + '</div>';
+      groups[s].forEach(function (e) {
+        html += '<div class="ment"><span class="ment-t">' + esc(e.title || '未命名素材') + '</span>'
+          + (e.body ? '<span class="ment-b">' + esc(e.body) + '</span>' : '')
+          + '<button type="button" class="ment-x" data-act="delEntry" data-idx="' + es.indexOf(e) + '" aria-label="删除素材">' + svg('<path d="M6 6l12 12M18 6 6 18"/>') + '</button></div>';
+      });
+    });
+    return html + '</div>';
+  }
+  function editorHTML() {
+    return '<div class="medit">'
+      + '<input data-f="sub" placeholder="细分（可自定义），如：角色 / 场景" />'
+      + '<input data-f="title" placeholder="素材标题" />'
+      + '<textarea data-f="body" rows="2" placeholder="素材内容（可留空）"></textarea>'
+      + '<div class="medit-acts"><button type="button" class="btn btn-primary btn-sm" data-act="saveEntry">保存</button>'
+      + '<button type="button" class="btn btn-ghost btn-sm" data-act="cancelEntry">取消</button></div>'
+      + '</div>';
+  }
+  function card(cat, t, idx) {
+    var name = t.t, desc = t.d, es = entriesOf(cat.g, name);
+    var tag = cat.g + (t.sub ? ' · ' + t.sub : '');
+    return '<article class="mcard" tabindex="0" role="button" aria-expanded="false" data-name="' + esc(name) + '" data-key="' + esc(keyOf(cat.g, name)) + '">'
+      + '<div class="mcard-face">'
+      +   '<div class="mcard-top"><span class="mcard-ic">' + icon(idx) + '</span><span class="mcard-tag">' + esc(tag) + '</span></div>'
+      +   '<h3 class="mcard-t">' + esc(name) + '</h3>'
+      +   '<p class="mcard-d">' + esc(desc) + '</p>'
+      +   '<span class="mcard-foot"><b>' + es.length + '</b> 条素材'
+      +     '<span class="go">展开 ' + svg('<path d="m9 6 6 6-6 6"/>') + '</span></span>'
+      + '</div>'
+      + '<div class="mcard-detail">'
+      +   '<span class="k">' + esc(tag) + ' · 素材类型</span>'
+      +   '<h3 class="mcard-t">' + esc(name) + '</h3>'
+      +   entryListHTML(cat.g, name)
+      +   editorHTML()
+      +   '<div class="mcard-acts">'
+      +     '<button type="button" class="btn btn-ghost btn-sm" data-act="add">' + svg('<path d="M12 5v14M5 12h14"/>') + '新建素材</button>'
+      +     (isCustomType(cat.g, name) ? '<button type="button" class="btn btn-ghost btn-sm" data-act="delType">删除类型</button>' : '')
+      +     '<button type="button" class="btn btn-ghost btn-sm" data-act="close">返回</button>'
+      +   '</div>'
+      + '</div>'
+      + '</article>';
+  }
+  function renderGallery(keepScroll) {
+    var st = keepScroll ? galWrap.scrollTop : 0;
+    var cats = getCats();
+    var q = (qInput.value || '').trim().toLowerCase();
+    var show = cats.filter(function (c) { return state.cat === '*' || c.g === state.cat; });
+    var html = '', shown = 0, k = 0, gi = 0;
+    show.forEach(function (c) {
+      var hits = c.types.filter(function (t) { return match(t.t + '|' + t.d + '|' + (t.sub || ''), q); });
+      if (!hits.length) return;
+      shown += hits.length;
+      html += '<section class="mg" data-od-id="mat-group-' + (gi++) + '"><div class="mg-h"><span class="mark"></span><span class="nm">' + esc(c.g) + '</span>'
+        + '<span class="line"></span><span class="n">' + hits.length + ' 型</span></div>';
+      var hasSub = hits.some(function (t) { return !!t.sub; });
+      if (hasSub) {
+        var order = [], buckets = {};
+        hits.forEach(function (t) {
+          var s = t.sub || '自定义';
+          if (!buckets[s]) { buckets[s] = []; order.push(s); }
+          buckets[s].push(t);
+        });
+        order.forEach(function (s) {
+          html += '<div class="mg-sub"><div class="mg-sub-h"><span>' + esc(s) + '</span><em>' + buckets[s].length + '</em><i></i></div><div class="mg-sub-grid">';
+          buckets[s].forEach(function (t) { html += card(c, t, (k++)); });
+          html += '</div></div>';
+        });
+      } else {
+        html += '<div class="mg-grid">';
+        hits.forEach(function (t) { html += card(c, t, (k++)); });
+        html += '</div>';
+      }
+      html += '</section>';
+    });
+    if (!shown) {
+      html = '<div class="gal-empty">' + svg('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-3.6-3.6"/>')
+        + '<p>没有匹配的素材类型，换个关键词试试。</p></div>';
+    }
+    galWrap.innerHTML = html;
+    galWrap.scrollTop = st;
+    if (state._open) {
+      Array.prototype.slice.call(galWrap.querySelectorAll('.mcard')).forEach(function (el) {
+        if (el.getAttribute('data-key') === state._open) el.classList.add('is-open');
+      });
+    }
+    if (state.cat === '*') {
+      matsH.textContent = '全部素材';
+      matsSub.textContent = '按题材归类的 ' + totalTypes(cats) + ' 种可复用写作素材 · 点卡片在原位展开';
+    } else {
+      var g = findCat(cats, state.cat);
+      matsH.textContent = g ? g.g : '素材库';
+      if (g) {
+        var subs = {};
+        g.types.forEach(function (t) { if (t.sub) subs[t.sub] = 1; });
+        var subN = Object.keys(subs).length;
+        matsSub.textContent = '共 ' + g.types.length + ' 种素材类型' + (subN ? ' · ' + subN + ' 个细分' : '') + ' · 点卡片在原位展开';
+      } else matsSub.textContent = '';
+    }
+  }
+
+  navWrap.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('#navNewType')) { openTypeModal(); return; }
+    var btn = e.target.closest && e.target.closest('.mnav-item');
+    if (!btn) return;
+    state.cat = btn.getAttribute('data-cat');
+    state._open = '';
+    save();
+    Array.prototype.slice.call(navWrap.querySelectorAll('.mnav-item')).forEach(function (b) {
+      b.classList.toggle('is-on', b === btn);
+    });
+    renderGallery(false);
+  });
+
+  function clearEditor(cardEl) {
+    Array.prototype.slice.call(cardEl.querySelectorAll('.medit [data-f]')).forEach(function (i) { i.value = ''; });
+  }
+  function saveEntry(cardEl, cName) {
+    var get = function (f) { var el = cardEl.querySelector('.medit [data-f="' + f + '"]'); return el ? el.value.trim() : ''; };
+    var tName = cardEl.getAttribute('data-name');
+    var sub = get('sub'), title = get('title'), body = get('body');
+    if (!title && !body && !sub) { toast('请至少填写标题、内容或细分'); return; }
+    state.entries = state.entries || {};
+    var kk = keyOf(cName, tName);
+    (state.entries[kk] = state.entries[kk] || []).push({ title: title || '未命名素材', sub: sub, body: body });
+    save();
+    state._open = kk;
+    renderGallery(true);
+    toast('已新建素材「' + (title || '未命名素材') + '」');
+  }
+  function deleteEntry(cName, tName, idx) {
+    var kk = keyOf(cName, tName);
+    var arr = state.entries && state.entries[kk];
+    if (!arr || idx < 0 || idx >= arr.length) return;
+    arr.splice(idx, 1);
+    if (!arr.length) delete state.entries[kk];
+    save();
+    state._open = kk;
+    renderGallery(true);
+    toast('已删除该素材');
+  }
+  function deleteType(cName, tName) {
+    if (!isCustomType(cName, tName)) { toast('内置素材类型不可删除'); return; }
+    var cc = (state.customCats || []).filter(function (x) { return x.g === cName; })[0];
+    if (cc) {
+      cc.types = (cc.types || []).filter(function (t) { return t.t !== tName; });
+      if (!cc.types.length) state.customCats = state.customCats.filter(function (x) { return x !== cc; });
+    } else if (state.customTypes[cName]) {
+      state.customTypes[cName] = state.customTypes[cName].filter(function (t) { return t.t !== tName; });
+    }
+    delete state.entries[keyOf(cName, tName)];
+    state._open = '';
+    if (state.cat === cName && !findCat(getCats(), cName)) state.cat = '*';
+    save();
+    buildNav();
+    renderGallery(false);
+    toast('已删除类型「' + tName + '」');
+  }
+
+  galWrap.addEventListener('click', function (e) {
+    var act = e.target.closest && e.target.closest('[data-act]');
+    if (act) {
+      var cardEl = act.closest('.mcard');
+      var cName = cardEl.getAttribute('data-key').split('||')[0];
+      var tName = cardEl.getAttribute('data-name');
+      var a = act.getAttribute('data-act');
+      if (a === 'close') {
+        cardEl.classList.remove('is-open', 'is-adding');
+        cardEl.setAttribute('aria-expanded', 'false');
+        if (state._open === cardEl.getAttribute('data-key')) state._open = '';
+        save();
+      } else if (a === 'add') {
+        cardEl.classList.add('is-adding');
+        var f = cardEl.querySelector('.medit [data-f="sub"]');
+        if (f) f.focus();
+      } else if (a === 'cancelEntry') {
+        cardEl.classList.remove('is-adding');
+        clearEditor(cardEl);
+      } else if (a === 'saveEntry') {
+        saveEntry(cardEl, cName);
+      } else if (a === 'delType') {
+        deleteType(cName, tName);
+      } else if (a === 'delEntry') {
+        deleteEntry(cName, tName, parseInt(act.getAttribute('data-idx'), 10));
+      }
+      return;
+    }
+    var face = e.target.closest && e.target.closest('.mcard-face');
+    if (!face) return;
+    var c = face.closest('.mcard');
+    var open = c.classList.toggle('is-open');
+    c.setAttribute('aria-expanded', open ? 'true' : 'false');
+    c.classList.remove('is-adding');
+    state._open = open ? c.getAttribute('data-key') : '';
+    save();
+  });
+  galWrap.addEventListener('keydown', function (e) {
+    var c = e.target.closest && e.target.closest('.mcard');
+    if (!c || e.target !== c) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      var open = c.classList.toggle('is-open');
+      c.setAttribute('aria-expanded', open ? 'true' : 'false');
+      state._open = open ? c.getAttribute('data-key') : '';
+      save();
+    } else if (e.key === 'Escape') {
+      c.classList.remove('is-open', 'is-adding');
+      c.setAttribute('aria-expanded', 'false');
+      if (state._open === c.getAttribute('data-key')) state._open = '';
+      save();
+    }
+  });
+
+  qInput.addEventListener('input', function () { renderGallery(true); });
+
+  /* ── 新建素材弹层（可顺带自定义分类 / 类型 / 细分） ─────────────── */
+  var modal = document.getElementById('modal');
+  var fCat = document.getElementById('fCat'), fType = document.getElementById('fType');
+  var fNewCatWrap = document.getElementById('fNewCatWrap'), fNewTypeWrap = document.getElementById('fNewTypeWrap');
+  var fNewCat = document.getElementById('fNewCat'), fNewType = document.getElementById('fNewType');
+  var fSub = document.getElementById('fSub'), fTitle = document.getElementById('fTitle'), fBody = document.getElementById('fBody');
+  var msubList = document.getElementById('msubList');
+  var NEW = '__new__';
+
+  function fillTypes() {
+    var cats = getCats();
+    var types = (findCat(cats, fCat.value) || { types: [] }).types;
+    var opts = types.map(function (t) { return '<option value="' + esc(t.t) + '">' + esc(t.t) + '</option>'; }).join('');
+    fType.innerHTML = opts || '<option value="">（此分类暂无类型，请先用「自定义类型」新增）</option>';
+    updateWraps();
+  }
+  function updateWraps() {
+    fNewCatWrap.style.display = (fCat.value === NEW) ? '' : 'none';
+    fNewTypeWrap.style.display = (fCat.value === NEW || fType.value === NEW) ? '' : 'none';
+    var cName = fCat.value === NEW ? fNewCat.value.trim() : fCat.value;
+    var tName = fType.value;
+    var subs = [];
+    if (cName && cName !== NEW && tName && tName !== NEW) {
+      entriesOf(cName, tName).forEach(function (e) { if (e.sub && subs.indexOf(e.sub) < 0) subs.push(e.sub); });
+    }
+    msubList.innerHTML = subs.map(function (s) { return '<option value="' + esc(s) + '"></option>'; }).join('');
+  }
+  function openModal() {
+    var cats = getCats();
+    fCat.innerHTML = cats.map(function (c) { return '<option value="' + esc(c.g) + '">' + esc(c.g) + '</option>'; }).join('');
+    if (state.cat && state.cat !== '*' && findCat(cats, state.cat)) fCat.value = state.cat;
+    fillTypes();
+    fNewCat.value = ''; fNewType.value = ''; fSub.value = ''; fTitle.value = ''; fBody.value = '';
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    setTimeout(function () { fTitle.focus(); }, 30);
+  }
+  function closeModal() { modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); }
+  fCat.addEventListener('change', fillTypes);
+  fType.addEventListener('change', updateWraps);
+  fNewCat.addEventListener('input', updateWraps);
+  document.getElementById('mCancel').addEventListener('click', closeModal);
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
+  document.getElementById('mSave').addEventListener('click', function () {
+    var cName = fCat.value === NEW ? fNewCat.value.trim() : fCat.value;
+    if (!cName) { toast('请填写新分类名'); fNewCat.focus(); return; }
+    var tName = (fCat.value === NEW || fType.value === NEW) ? fNewType.value.trim() : fType.value;
+    var sub = fSub.value.trim(), title = fTitle.value.trim(), body = fBody.value.trim();
+    if (!tName && !title && !body) { toast('请填写类型名或素材内容'); return; }
+    ensureType(cName, tName || '未命名类型');
+    var fn = tName || '未命名类型';
+    if (title || body || sub) {
+      state.entries = state.entries || {};
+      var kk = keyOf(cName, fn);
+      (state.entries[kk] = state.entries[kk] || []).push({ title: title || '未命名素材', sub: sub, body: body });
+      toast('已新建素材「' + (title || '未命名素材') + '」');
+    } else {
+      toast('已新建类型「' + fn + '」');
+    }
+    state.cat = cName;
+    state._open = keyOf(cName, fn);
+    save();
+    if (QB_PROJ && (title || body || sub)) {
+      fetch('/api/projects/' + QB_PROJ + '/materials', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title: title || '未命名素材', cat: cName, type: fn, sub: sub, content: body })
+      }).catch(function () {});
+    }
+    buildNav();
+    renderGallery(false);
+    closeModal();
+  });
+
+  /* ── 通知气泡 + toast ───────────────────────────────────────────── */
+  var bell = document.getElementById('bell');
+  var pop = document.getElementById('bellPop');
+  bell.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var open = pop.classList.toggle('open');
+    bell.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  document.addEventListener('click', function (e) {
+    if (!pop.contains(e.target) && e.target !== bell) {
+      pop.classList.remove('open');
+      bell.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  var toastEl = document.getElementById('toast');
+  var toastTx = document.getElementById('toastTx');
+  var toastTimer;
+  function toast(msg) {
+    toastTx.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2200);
+  }
+  document.getElementById('newMat').addEventListener('click', openModal);
+
+  /* ── 自定义类型弹层（与「新建素材」分开：只增类型 / 分类） ───────── */
+  var typeModal = document.getElementById('typeModal');
+  var tCat = document.getElementById('tCat');
+  var tNewCatWrap = document.getElementById('tNewCatWrap');
+  var tNewCat = document.getElementById('tNewCat');
+  var tType = document.getElementById('tType');
+  function updateTypeCat() { tNewCatWrap.style.display = (tCat.value === NEW) ? '' : 'none'; }
+  function openTypeModal() {
+    var cats = getCats();
+    tCat.innerHTML = cats.map(function (c) { return '<option value="' + esc(c.g) + '">' + esc(c.g) + '</option>'; }).join('')
+      + '<option value="' + NEW + '">＋ 新建分类…</option>';
+    if (state.cat && state.cat !== '*' && findCat(cats, state.cat)) tCat.value = state.cat;
+    tNewCat.value = ''; tType.value = '';
+    updateTypeCat();
+    typeModal.classList.add('open');
+    typeModal.setAttribute('aria-hidden', 'false');
+    setTimeout(function () { tType.focus(); }, 30);
+  }
+  function closeTypeModal() { typeModal.classList.remove('open'); typeModal.setAttribute('aria-hidden', 'true'); }
+  tCat.addEventListener('change', updateTypeCat);
+  document.getElementById('tCancel').addEventListener('click', closeTypeModal);
+  typeModal.addEventListener('click', function (e) { if (e.target === typeModal) closeTypeModal(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && typeModal.classList.contains('open')) closeTypeModal(); });
+  document.getElementById('tSave').addEventListener('click', function () {
+    var cName = tCat.value === NEW ? tNewCat.value.trim() : tCat.value;
+    if (!cName) { toast('请填写新分类名'); tNewCat.focus(); return; }
+    var tName = tType.value.trim();
+    if (!tName) { toast('请填写类型名'); tType.focus(); return; }
+    ensureType(cName, tName);
+    state.cat = cName;
+    state._open = keyOf(cName, tName);
+    save();
+    buildNav();
+    renderGallery(false);
+    closeTypeModal();
+    toast('已新建类型「' + tName + '」');
+  });
+
+  buildNav();
+  renderGallery(false);
+  if (QB_PROJ) {
+    fetch('/api/projects/' + QB_PROJ).then(function (r) { return r.json(); }).then(function (p) {
+      if (!p || !Array.isArray(p.materials)) return;
+      p.materials.forEach(function (m) {
+        var cat = m.cat || '灵感速记', type = m.type || '素材';
+        try { ensureType(cat, type); } catch (e) { }
+        var kk = keyOf(cat, type);
+        state.entries = state.entries || {};
+        (state.entries[kk] = state.entries[kk] || []).push({ title: m.title || '未命名素材', sub: m.sub || '', body: m.content || '' });
+      });
+      buildNav();
+      renderGallery(false);
+    }).catch(function () { });
+  }
+})();
+</script>
+  <script src="qibi-avatar.js?v=3"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# ── 本机数据：作品、设置、API 密钥 ──────────────────────────
+data/
+db.json
+config.json
+*.pid
+
+# ── 依赖与构建产物 ─────────────────────────────────────────
+node_modules/
+dist/
+release/
+tts-venv/
+runtime/
+*.log
+
+# ── 系统杂项 ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.chrome-tmp/

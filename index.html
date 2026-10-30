@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>启笔 QIBI · AI 小说编辑器</title>
+<meta name="description" content="启笔 QIBI：面向中文长篇小说创作的 AI 写作工作台。十二屏深夜色水墨界面 + 本地 Node 后端，可本地运行，也可打包成桌面应用。" />
+<link rel="icon" type="image/png" href="app-icon.png" />
+<style>
+  :root {
+    --bg:      oklch(15% 0.010 262);
+    --fg:      oklch(94% 0.006 90);
+    --muted:   oklch(73% 0.010 90);
+    --faint:   oklch(58% 0.010 90);
+    --border:  oklch(96% 0.006 90 / 0.13);
+    --hair:    oklch(96% 0.006 90 / 0.085);
+    --accent:  oklch(55% 0.17 28);
+    --accent-bright: oklch(73% 0.15 32);
+    --accent-ink:    oklch(98% 0.008 30);
+    --scrim:   oklch(11% 0.012 262);
+
+    --font-display: 'Iowan Old Style', 'Charter', Georgia, 'Songti SC', 'STSong', 'Source Han Serif SC', 'Noto Serif SC', 'SimSun', serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .ground {
+    position: fixed; inset: 0; z-index: -2;
+    background:
+      url('%E6%B0%B4%E5%A2%A8%E5%B0%91%E5%A5%B3-%E5%A4%9C%E8%89%B2.png') center 22% / cover no-repeat,
+      var(--bg);
+  }
+  .veil {
+    position: fixed; inset: 0; z-index: -1;
+    background:
+      radial-gradient(120% 90% at 50% 0%, transparent 20%, color-mix(in oklch, var(--scrim) 78%, transparent) 72%),
+      linear-gradient(to bottom, color-mix(in oklch, var(--scrim) 62%, transparent), color-mix(in oklch, var(--scrim) 88%, transparent));
+  }
+
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: clamp(40px, 9vh, 96px) clamp(20px, 5vw, 40px) 72px;
+  }
+
+  /* ── 页眉 ── */
+  header.masthead { display: flex; align-items: center; gap: 14px; }
+  .mark {
+    width: 46px; height: 46px; border-radius: 11px;
+    border: 1px solid var(--border);
+    background: oklch(97% 0.002 90);
+    object-fit: cover; flex: none;
+  }
+  .wordmark { display: flex; flex-direction: column; gap: 2px; }
+  .wordmark b {
+    font-family: var(--font-display);
+    font-size: 19px; font-weight: 600; letter-spacing: .14em;
+  }
+  .wordmark span {
+    font-family: var(--font-mono);
+    font-size: 10.5px; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  /* ── 标题 ── */
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(30px, 5.6vw, 52px);
+    line-height: 1.18;
+    letter-spacing: .01em;
+    margin: clamp(34px, 6vh, 56px) 0 0;
+    text-wrap: balance;
+  }
+  h1 em {
+    font-style: normal;
+    color: var(--accent-bright);
+    border-bottom: 1px solid color-mix(in oklch, var(--accent) 55%, transparent);
+    padding-bottom: 2px;
+  }
+  .lede {
+    max-width: 37em;
+    margin: 20px 0 0;
+    color: var(--muted);
+    font-size: clamp(13.5px, 1.4vw, 15px);
+    line-height: 1.85;
+  }
+
+  /* ── 动作与状态 ── */
+  .actions {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+    margin-top: 28px;
+  }
+  .cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: 1px solid color-mix(in oklch, var(--accent) 62%, black);
+    text-decoration: none;
+    font-family: var(--font-display);
+    font-size: 15px; letter-spacing: .1em;
+    transition: background .2s ease, transform .2s ease;
+  }
+  .cta:hover, .cta:focus-visible { background: var(--accent-bright); transform: translateY(-1px); outline: none; }
+  .cta::after { content: "→"; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0; }
+
+  .status {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 8px 15px 8px 13px;
+    border: 1px solid var(--hair);
+    border-radius: 999px;
+    background: oklch(96% 0.006 90 / 0.028);
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .status .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--faint); flex: none;
+    transition: background .3s ease;
+  }
+  .status[data-state="checking"] .dot { animation: pulse 1.3s ease-in-out infinite; }
+  .status[data-state="online"] .dot { background: oklch(72% 0.15 150); }
+  .status[data-state="offline"] .dot { background: oklch(66% 0.14 40); }
+  .status code {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--accent-bright);
+    background: oklch(96% 0.006 90 / 0.06);
+    padding: 1px 5px; border-radius: 4px;
+  }
+  @keyframes pulse { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 8px 18px;
+    margin-top: 22px;
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: .08em;
+    color: var(--faint);
+  }
+  .meta i { font-style: normal; color: color-mix(in oklch, var(--accent-bright) 70%, var(--faint)); }
+
+  /* ── 目次 ── */
+  .rail-head {
+    display: flex; align-items: baseline; gap: 12px;
+    margin: clamp(40px, 7vh, 64px) 0 4px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rail-head h2 {
+    font-family: var(--font-display);
+    font-size: 15px; font-weight: 600; letter-spacing: .3em;
+    margin: 0; color: var(--fg);
+  }
+  .rail-head .rule { flex: 1; height: 1px; background: var(--hair); }
+  .rail-head .count {
+    font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .18em;
+    color: var(--faint);
+  }
+
+  ol.rail { list-style: none; margin: 0; padding: 0; }
+  ol.rail li { border-bottom: 1px solid var(--hair); }
+  ol.rail a {
+    display: grid;
+    grid-template-columns: 42px 1fr auto;
+    align-items: baseline;
+    gap: 4px 14px;
+    padding: 17px 12px 17px 4px;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    transition: background .22s ease, padding-left .22s ease;
+  }
+  ol.rail a::before {
+    content: "";
+    position: absolute; left: 0; top: 12%;
+    width: 2px; height: 0;
+    background: var(--accent);
+    transition: height .24s ease;
+  }
+  ol.rail a:hover, ol.rail a:focus-visible {
+    background: oklch(96% 0.006 90 / 0.035);
+    padding-left: 14px;
+    outline: none;
+  }
+  ol.rail a:hover::before, ol.rail a:focus-visible::before { height: 76%; }
+  ol.rail a:hover .no, ol.rail a:focus-visible .no { color: var(--accent-bright); }
+  ol.rail a:hover .go, ol.rail a:focus-visible .go { opacity: 1; transform: translateX(0); }
+
+  .no {
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: .1em;
+    color: var(--faint);
+    transition: color .22s ease;
+  }
+  .name {
+    font-family: var(--font-display);
+    font-size: 18px; font-weight: 600; letter-spacing: .06em;
+  }
+  .desc {
+    grid-column: 2 / 3;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-top: 3px;
+  }
+  .go {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--accent-bright);
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity .22s ease, transform .22s ease;
+  }
+
+  footer {
+    margin-top: 46px;
+    display: flex; flex-wrap: wrap; gap: 10px 20px;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10.5px; letter-spacing: .14em;
+    color: var(--faint);
+  }
+  footer a { color: var(--faint); text-decoration: none; border-bottom: 1px solid var(--hair); }
+  footer a:hover { color: var(--accent-bright); border-color: currentColor; }
+
+  @media (max-width: 560px) {
+    ol.rail a { grid-template-columns: 30px 1fr; }
+    .desc { grid-column: 2 / 3; }
+    .go { display: none; }
+    .name { font-size: 16.5px; }
+    .status { font-size: 11.5px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="ground"></div>
+<div class="veil"></div>
+
+<main class="page">
+  <header class="masthead">
+    <img class="mark" src="app-icon.png" alt="启笔图标" />
+    <div class="wordmark">
+      <b>启笔</b>
+      <span>QIBI · AI Novel Editor</span>
+    </div>
+  </header>
+
+  <h1>把一部小说，<br />拆成<em>可以下笔的十道工序</em>。</h1>
+
+  <p class="lede">
+    启笔是一套面向中文长篇小说创作的 AI 工作台：从起名、导入旧稿、立人物、搭大纲，到定题材、挑钩子、调配比，
+    每一步都留下一块可以回头改的砖。十二屏界面 + 一个跑在本机的 Node 后端，作品与密钥都只留在你自己的磁盘上。
+  </p>
+
+  <div class="actions">
+    <a class="cta" href="ai-novel-editor-home.html">进入工作台</a>
+    <span class="status" id="status" data-state="checking">
+      <span class="dot"></span>
+      <span id="status-text">正在检测本地服务…</span>
+    </span>
+  </div>
+
+  <div class="meta">
+    <span><i>12</i> 屏界面</span>
+    <span><i>2.7万</i> 行前端</span>
+    <span><i>1346</i> 行 Node 后端</span>
+    <span>零前端依赖 · 零构建</span>
+  </div>
+
+  <div class="rail-head">
+    <h2>目 次</h2>
+    <div class="rule"></div>
+    <div class="count">CONTENTS</div>
+  </div>
+
+  <ol class="rail">
+    <li><a href="ai-novel-editor-home.html">
+      <span class="no">01</span>
+      <span class="name">创作台</span>
+      <span class="go">→</span>
+      <span class="desc">十步开篇：作品 · 起笔 · 参考 · 人物 · 大纲 · 题材 · 钩子 · 配比 · 特殊 · 范围</span>
+    </a></li>
+    <li><a href="qibi-studio.html">
+      <span class="no">02</span>
+      <span class="name">编辑器</span>
+      <span class="go">→</span>
+      <span class="desc">正文、章节与大纲同屏；Markdown / 纯文本导出，按卷按章打包</span>
+    </a></li>
+    <li><a href="qibi-mode.html">
+      <span class="no">03</span>
+      <span class="name">模式开局台</span>
+      <span class="go">→</span>
+      <span class="desc">属性、人物、事件、设定四步定调，也可以一键写整本</span>
+    </a></li>
+    <li><a href="qibi-transmigration.html">
+      <span class="no">04</span>
+      <span class="name">穿书</span>
+      <span class="go">→</span>
+      <span class="desc">选底本、定穿法、认领身份，把自己写进别人的书里</span>
+    </a></li>
+    <li><a href="qibi-memoir.html">
+      <span class="no">05</span>
+      <span class="name">自传</span>
+      <span class="go">→</span>
+      <span class="desc">与「老师」对谈，讲出来的事自动沉淀成书稿</span>
+    </a></li>
+    <li><a href="qibi-tools.html">
+      <span class="no">06</span>
+      <span class="name">工具箱</span>
+      <span class="go">→</span>
+      <span class="desc">设定、结构与辅助创作，每件工具都在独立工作页里打开</span>
+    </a></li>
+    <li><a href="qibi-tool.html">
+      <span class="no">07</span>
+      <span class="name">工具工作页 · 续写</span>
+      <span class="go">→</span>
+      <span class="desc">接着任意段落往下写，实时咬合上文与文风</span>
+    </a></li>
+    <li><a href="qibi-work.html">
+      <span class="no">08</span>
+      <span class="name">作品书架</span>
+      <span class="go">→</span>
+      <span class="desc">草稿本机自动存档，封面、简介与章节一览</span>
+    </a></li>
+    <li><a href="qibi-stats.html">
+      <span class="no">09</span>
+      <span class="name">统计</span>
+      <span class="go">→</span>
+      <span class="desc">十类一百二十项写作指标，环形模块切换</span>
+    </a></li>
+    <li><a href="qibi-materials.html">
+      <span class="no">10</span>
+      <span class="name">素材库</span>
+      <span class="go">→</span>
+      <span class="desc">按题材归类的可复用写作素材，卡片原位展开</span>
+    </a></li>
+    <li><a href="qibi-accounts.html">
+      <span class="no">11</span>
+      <span class="name">账号管理</span>
+      <span class="go">→</span>
+      <span class="desc">多平台账号只用于本地统计归属，不代登录、不存凭据</span>
+    </a></li>
+    <li><a href="qibi-settings.html">
+      <span class="no">12</span>
+      <span class="name">设置</span>
+      <span class="go">→</span>
+      <span class="desc">十五项六类偏好，含模型接入配置</span>
+    </a></li>
+  </ol>
+
+  <footer>
+    <span>夜色水墨 · 朱砂一点</span>
+    <span><a href="https://github.com/1842567940/ai-">GitHub 仓库</a> · 桌面端浏览更佳</span>
+  </footer>
+</main>
+
+<script>
+(function () {
+  var el = document.getElementById('status');
+  var txt = document.getElementById('status-text');
+  var settled = false;
+
+  function set(state, html) {
+    settled = true;
+    el.setAttribute('data-state', state);
+    txt.innerHTML = html;
+  }
+
+  var timer = setTimeout(function () {
+    if (!settled) set('offline', '静态预览 · 未检测到本地服务');
+  }, 2500);
+
+  // 探针用 projects（不含任何密钥），有响应即说明本机后端在线
+  fetch('api/projects', { cache: 'no-store' })
+    .then(function (r) { if (!r.ok) throw new Error('no api'); return r.json(); })
+    .then(function () {
+      clearTimeout(timer);
+      set('online', '后端已连接 · AI 与作品存储可用');
+    })
+    .catch(function () {
+      clearTimeout(timer);
+      set('offline', '静态预览 · 本地运行 <code>npm start</code> 可启用 AI');
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>启笔 QIBI · 工具箱</title>
+<link rel="icon" type="image/png" href="app-icon.png" />
+<style>
+  /* ─── tokens — 沿用工作台 (ai-novel-editor-home.html) 的夜色水墨令牌 ──
+        工具箱 = 左 rail（应用导航）· 中分类汇总 · 右工具卡片画廊。
+        夜的墨、纸白字、一点朱砂；一屏，仅分类栏与画廊各自滚动。
+        每一件工具都在独立工作页里打开（qibi-tool.html）。 */
+  :root {
+    --bg:      oklch(15% 0.010 262);
+    --surface: oklch(23% 0.011 262);
+    --fg:      oklch(94% 0.006 90);
+    --muted:   oklch(73% 0.010 90);
+    --border:  oklch(96% 0.006 90 / 0.13);
+    --accent:  oklch(55% 0.17 28);
+
+    --ink-soft:      oklch(96% 0.006 90 / 0.055);
+    --ink-hair:      oklch(96% 0.006 90 / 0.16);
+    --ink-dash:      oklch(96% 0.006 90 / 0.26);
+    --accent-soft:   oklch(60% 0.17 28 / 0.17);
+    --accent-line:   oklch(62% 0.17 28 / 0.44);
+    --accent-ink:    oklch(98% 0.008 30);
+    --accent-deep:   oklch(47% 0.16 28);
+    --accent-bright: oklch(73% 0.15 32);
+    --scrim:         oklch(11% 0.012 262);
+
+    --font-display: 'Iowan Old Style', 'Charter', Georgia, 'Songti SC', 'STSong', 'Source Han Serif SC', 'Noto Serif SC', 'SimSun', serif;
+    --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    --font-mono:    ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+
+    --r-sm: 9px; --r-md: 12px; --r-lg: 15px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; overflow: hidden;
+    background: var(--bg); color: var(--fg);
+    font-family: var(--font-body); font-size: 14px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  .bg-photo {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: var(--bg) url("%E6%B0%B4%E5%A2%A8%E5%B0%91%E5%A5%B3-%E5%A4%9C%E8%89%B2.png") center / cover no-repeat;
+  }
+  .bg-scrim {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      linear-gradient(180deg, oklch(9% 0.012 262 / 0.05), transparent 60%, oklch(10% 0.012 262 / 0.03)),
+      linear-gradient(103deg, oklch(8% 0.012 262 / 0.05) 0%, oklch(10% 0.012 262 / 0.02) 52%, oklch(12% 0.012 262 / 0) 100%);
+  }
+  img, svg { display: block; max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  h1, h2, h3, h4, p { margin: 0; }
+  ::selection { background: var(--accent-soft); }
+
+  /* ─── shell ─────────────────────────────────────────────────────── */
+  .app {
+    position: relative; z-index: 1; height: 100vh;
+    display: grid;
+    grid-template-columns: 66px 268px minmax(0, 1fr);
+    grid-template-rows: 58px minmax(0, 1fr);
+  }
+  .appbar {
+    grid-column: 1 / -1; grid-row: 1;
+    display: flex; align-items: center; gap: 14px; padding: 0 18px 0 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--scrim);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; flex: none; }
+  .app-icon { width: 34px; height: 34px; flex: none; border-radius: 9px; object-fit: contain; box-shadow: 0 1px 3px oklch(0% 0 0 / 0.45), 0 0 0 1px var(--border); }
+  .brand-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: 0.02em; line-height: 1.1; }
+  .brand-sub { display: block; font-family: var(--font-mono); font-size: 8.5px; color: var(--muted); letter-spacing: 0.14em; margin-top: 1px; }
+  .crumb { display: flex; align-items: center; gap: 8px; flex: none; padding-left: 14px; border-left: 1px solid var(--border); font-size: 12.5px; color: var(--muted); }
+  .crumb-cur { color: var(--fg); font-weight: 500; }
+  .appbar-right { display: flex; align-items: center; gap: 9px; flex: none; margin-left: auto; }
+  .search { display: flex; align-items: center; gap: 8px; width: 246px; padding: 6px 11px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); background: var(--surface); }
+  .search svg { width: 15px; height: 15px; flex: none; }
+  .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--fg); font: inherit; font-size: 12.5px; }
+  .search input::placeholder { color: var(--muted); }
+  .search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .icon-btn { width: 36px; height: 36px; border-radius: var(--r-sm); flex: none; display: grid; place-items: center; background: transparent; border: 1px solid var(--border); color: var(--muted); transition: background .14s, color .14s, border-color .14s; }
+  .icon-btn:hover { background: var(--ink-soft); color: var(--fg); border-color: var(--ink-hair); }
+  .icon-btn svg { width: 17px; height: 17px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 8px 15px; border-radius: var(--r-sm); border: 1px solid transparent; font-size: 13.5px; font-weight: 500; transition: background .15s, border-color .15s, color .15s, transform .05s; }
+  .btn:active { transform: translateY(1px); }
+  .btn svg { width: 15px; height: 15px; }
+  .btn-ghost { background: transparent; border-color: var(--border); color: var(--fg); }
+  .btn-ghost:hover { background: var(--ink-soft); border-color: var(--ink-hair); }
+  .btn-sm { padding: 6px 12px; font-size: 12.5px; }
+  :where(.btn, .icon-btn, .rail-btn, .tgroup, .tcard, .tnav-all):focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
+
+  /* ─── left rail ──────────────────────────────────────────────────── */
+  .rail { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 12px 0 14px; overflow: hidden; border-right: 1px solid var(--border); background: color-mix(in oklch, var(--scrim) 34%, transparent); }
+  .rail-btn { width: 54px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; border-radius: 12px; border: 1px solid transparent; background: transparent; color: var(--muted); font-size: 10px; letter-spacing: 0.02em; transition: background .14s, color .14s, border-color .14s; }
+  .rail-btn svg { width: 19px; height: 19px; }
+  .rail-btn:hover { background: var(--ink-soft); color: var(--fg); }
+  .rail-btn.is-active { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-bright); }
+  .rail-spacer { flex: 1; }
+  .rail-avatar { width: 34px; height: 34px; border-radius: 999px; flex: none; display: grid; place-items: center; color: var(--muted); background: var(--ink-soft); border: 1px dashed var(--ink-dash); }
+  .rail-avatar svg { width: 17px; height: 17px; }
+
+  /* ─── 分类汇总 column ────────────────────────────────────────────── */
+  .tnav { grid-column: 2; grid-row: 2; min-height: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: color-mix(in oklch, var(--scrim) 44%, transparent); }
+  .tnav-head { flex: none; display: flex; align-items: center; gap: 10px; padding: 15px 16px 12px; border-bottom: 1px solid var(--border); }
+  .tnav-title { font-family: var(--font-display); font-size: 15px; font-weight: 600; letter-spacing: 0.06em; }
+  .tnav-sub { font-family: var(--font-mono); font-size: 9.5px; color: var(--muted); letter-spacing: 0.1em; margin-left: auto; }
+  .tnav-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px 10px 20px; scrollbar-width: thin; scrollbar-color: var(--ink-hair) transparent; }
+  .tnav-scroll::-webkit-scrollbar { width: 8px; }
+  .tnav-scroll::-webkit-scrollbar-thumb { background: var(--ink-hair); border-radius: 999px; }
+  .tnav-all { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 9px; margin-bottom: 3px; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--ink-soft); color: var(--fg); font-size: 12.5px; transition: background .14s, border-color .14s; }
+  .tnav-all:hover { border-color: var(--ink-hair); }
+  .tnav-all.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-bright); }
+  .tnav-all svg { width: 16px; height: 16px; }
+  .tnav-all .n { margin-left: auto; font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+  .tnav-all.is-on .n { color: var(--accent-bright); opacity: .9; }
+  .tgroup { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 9px; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--fg); transition: background .14s, color .14s; }
+  .tgroup:hover { background: var(--ink-soft); }
+  .tgroup .ic { width: 26px; height: 26px; flex: none; border-radius: 8px; display: grid; place-items: center; background: var(--ink-soft); color: var(--muted); transition: color .14s; }
+  .tgroup .ic svg { width: 15px; height: 15px; }
+  .tgroup:hover .ic { color: var(--fg); }
+  .tgroup .t { flex: 1; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tgroup .n { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+  .tgroup.is-on { background: var(--accent-soft); }
+  .tgroup.is-on .ic { color: var(--accent-bright); }
+  .tgroup.is-on .t { color: var(--accent-bright); }
+  .tgroup.is-on .n { color: var(--accent-bright); opacity: .85; }
+  .tgroup.is-empty { display: none; }
+  .tnav-sep { height: 1px; margin: 7px 9px; background: var(--border); }
+
+  /* ─── 工具画廊 ───────────────────────────────────────────────────── */
+  .tools { grid-column: 3; grid-row: 2; min-height: 0; display: flex; flex-direction: column; background: color-mix(in oklch, var(--scrim) 46%, transparent); }
+  .tools-head { flex: none; display: flex; align-items: flex-end; gap: 14px; padding: 22px 40px 16px; border-bottom: 1px solid var(--border); }
+  .tools-h { font-family: var(--font-display); font-size: 23px; font-weight: 600; letter-spacing: 0.03em; }
+  .tools-sub { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .tools-head .spacer { flex: 1; }
+  .tools-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 24px 40px 64px; scrollbar-width: thin; scrollbar-color: var(--ink-hair) transparent; }
+  .tools-scroll::-webkit-scrollbar { width: 8px; }
+  .tools-scroll::-webkit-scrollbar-thumb { background: var(--ink-hair); border-radius: 999px; }
+  .tg { margin-bottom: 30px; scroll-margin-top: 8px; }
+  .tg:last-child { margin-bottom: 0; }
+  .tg.is-empty { display: none; }
+  .tg-h { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
+  .tg-h .mark { width: 6px; height: 6px; flex: none; border-radius: 1px; background: var(--fg); opacity: .5; transform: rotate(45deg); }
+  .tg-h .nm { font-family: var(--font-display); font-size: 14px; font-weight: 600; letter-spacing: 0.06em; }
+  .tg-h .line { flex: 1; min-width: 10px; height: 1px; background: var(--border); }
+  .tg-h .n { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+  .tg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(224px, 1fr)); gap: 12px; }
+
+  .tcard { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 15px 16px 14px; border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; background: color-mix(in oklch, var(--surface) 82%, transparent); transition: border-color .14s, background .14s, transform .14s; }
+  .tcard:hover { border-color: var(--ink-hair); background: color-mix(in oklch, var(--surface) 96%, transparent); transform: translateY(-2px); }
+  .tcard-top { display: flex; align-items: center; gap: 10px; }
+  .tcard-ic { width: 32px; height: 32px; flex: none; border-radius: 9px; display: grid; place-items: center; background: var(--ink-soft); color: var(--muted); transition: color .14s; }
+  .tcard-ic svg { width: 17px; height: 17px; }
+  .tcard:hover .tcard-ic { color: var(--fg); }
+  .tcard-tag { margin-left: auto; font-family: var(--font-mono); font-size: 9.5px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+  .tcard-t { font-family: var(--font-display); font-size: 15.5px; font-weight: 600; letter-spacing: 0.02em; }
+  .tcard-d { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .tcard-go { margin-top: auto; display: flex; align-items: center; gap: 5px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--muted); }
+  .tcard-go .go { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; color: var(--accent-bright); opacity: 0; transform: translateX(-3px); transition: opacity .14s, transform .14s; }
+  .tcard-go .go svg { width: 12px; height: 12px; }
+  .tcard:hover .tcard-go .go { opacity: 1; transform: translateX(0); }
+  .tcard.is-hidden { display: none; }
+
+  .gal-empty { display: grid; place-items: center; gap: 8px; padding: 70px 20px; color: var(--muted); text-align: center; }
+  .gal-empty svg { width: 30px; height: 30px; opacity: .6; }
+  .gal-empty p { font-size: 13px; }
+
+  /* ─── popover + toast ────────────────────────────────────────────── */
+  .rel { position: relative; }
+  .pop { position: absolute; top: 46px; right: 0; width: 280px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: 0 16px 40px oklch(0% 0 0 / 0.45); padding: 7px; z-index: 60; display: none; }
+  .pop.open { display: block; }
+  .pop-empty { padding: 22px 16px; text-align: center; font-size: 12.5px; color: var(--muted); border: 1px dashed var(--ink-dash); border-radius: var(--r-sm); }
+  .toast { position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 14px); z-index: 80; display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--accent-line); background: color-mix(in oklch, var(--scrim) 88%, var(--accent-soft)); color: var(--fg); font-size: 12.5px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .toast i { width: 6px; height: 6px; border-radius: 999px; background: var(--accent-bright); }
+
+  /* ─── adapt ──────────────────────────────────────────────────────── */
+  @media (max-width: 1240px) { .app { grid-template-columns: 62px 236px minmax(0, 1fr); } .tools-head { padding-left: 30px; padding-right: 30px; } .tools-scroll { padding-left: 30px; padding-right: 30px; } }
+  @media (max-width: 980px) { .app { grid-template-columns: 60px minmax(0, 1fr); } .tnav { display: none; } .tools-head { padding: 16px 22px 13px; } .tools-scroll { padding: 18px 22px 54px; } }
+  @media (max-width: 620px) { .app { grid-template-columns: 60px minmax(0, 1fr); } .search { width: 150px; } .crumb { display: none; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="bg-photo" aria-hidden="true"></div>
+<div class="bg-scrim" aria-hidden="true"></div>
+
+<div class="app">
+
+  <header class="appbar" data-od-id="appbar">
+    <div class="brand">
+      <img class="app-icon" src="app-icon.png" width="34" height="34" alt="" />
+      <span>
+        <span class="brand-name">启笔</span>
+        <span class="brand-sub">QIBI · AI 小说编辑器</span>
+      </span>
+    </div>
+    <nav class="crumb" data-od-id="breadcrumb">
+      <span>工作台</span>
+      <span>/</span>
+      <span class="crumb-cur">工具箱</span>
+    </nav>
+
+    <div class="appbar-right">
+      <label class="search" title="搜索工具">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input id="q" type="search" placeholder="搜索工具" aria-label="搜索工具" />
+      </label>
+      <div class="rel">
+        <button class="icon-btn" id="bell" aria-label="通知" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+        </button>
+        <div class="pop" id="bellPop" role="menu"><div class="pop-empty">暂无新通知</div></div>
+      </div>
+      <a class="btn btn-ghost btn-sm" href="ai-novel-editor-home.html" title="回到工作台">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></svg>
+        工作台
+      </a>
+    </div>
+  </header>
+
+  <nav class="rail" data-od-id="rail" aria-label="应用导航">
+    <a class="rail-btn" href="ai-novel-editor-home.html#modes" title="创作模式">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 15.6l-1.7-4.6L6 9.3l4.3-1.7z"/></svg>
+      <span>模式</span>
+    </a>
+    <button class="rail-btn is-active" aria-current="page" title="工具箱">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 8h16v11H4z"/><path d="M4 8l2-3h12l2 3M9 12h6"/></svg>
+      <span>工具</span>
+    </button>
+    <a class="rail-btn" href="ai-novel-editor-home.html#works" title="作品">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
+      <span>作品</span>
+    </a>
+    <a class="rail-btn" href="qibi-stats.html" title="统计">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>
+      <span>统计</span>
+    </a>
+    <a class="rail-btn" href="qibi-materials.html" title="素材库">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>
+      <span>素材</span>
+    </a>
+    <a class="rail-btn" href="qibi-settings.html" title="设置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.6v3M12 18.4v3M2.6 12h3M18.4 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg>
+      <span>设置</span>
+    </a>
+    <span class="rail-spacer"></span>
+    <span class="rail-avatar" title="未设置头像" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="9" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg>
+    </span>
+  </nav>
+
+  <nav class="tnav" data-od-id="tools-nav" aria-label="工具分类">
+    <div class="tnav-head">
+      <span class="tnav-title">工具箱</span>
+      <span class="tnav-sub" id="navSub">— 项 · — 类</span>
+    </div>
+    <div class="tnav-scroll" id="navScroll"></div>
+  </nav>
+
+  <main class="tools" data-od-id="tools-canvas" id="tools">
+    <div class="tools-head">
+      <div>
+        <h1 class="tools-h">工具箱</h1>
+        <p class="tools-sub" id="toolsSub">设定、结构与辅助创作工具 · 每件工具都在独立工作页里打开</p>
+      </div>
+      <span class="spacer"></span>
+      <span class="tnav-sub" id="toolsMeta">— 件</span>
+    </div>
+    <div class="tools-scroll" id="gallery"></div>
+  </main>
+
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"><i></i><span id="toastText"></span></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── 工具目录：与工作台 (ai-novel-editor-home.html) 的「工具箱」一致 ──
+     每件工具都可单独打开一个独立工作页：qibi-tool.html?tool=名称&g=分类 */
+  var TOOLS = [
+    { g: '续写', items: [
+      '续写模块|接着任意段落往下写，实时咬合上文与文风','多分支续写|一次给出多条后续走向供挑选','无缝衔接|重申上文，让新段与旧段严丝合缝',
+      '风格延续|锁定既有文风，续写不走样','续写润色|续写的同时顺手打磨措辞','接龙续写|多人接龙，轮流续写同一部'
+    ]},
+    { g: '世界与设定', items: [
+      '世界观设定|规则、势力与地理','势力设定|门派、家族与阵营','组织架构|团体内部的层级与权责','地理设定|大陆、山川与城邦',
+      '种族设定|各族起源与特征','血脉设定|血脉天赋与传承','家族谱系|宗族血脉与代际关系','职业体系|职业分类与职责',
+      '经济体系|货币、贸易与物价','政治体系|制度、权责与制衡','宗教神话|信仰、神祇与传说','历史年表|大事记与年代线',
+      '语言文字|方言、文字与译名','星图设定|星系、航路与坐标'
+    ]},
+    { g: '力量与器物', items: [
+      '修炼体系|境界划分与晋升规则','力量体系|能力分级与代价设定','魔法体系|施法规则与派别','科技设定|技术水准与原理边界',
+      '幻兽图鉴|生物设定与生态','道具设定|器物、技能与法宝','服饰器物|时代考据与细节','食物设定|菜系、食材与风味',
+      '节日习俗|节庆、礼仪与禁忌','称谓职官|称呼、官制与礼数','货币度量|单位、换算与购买力'
+    ]},
+    { g: '人物塑造', items: [
+      '人物设定|角色档案与性格弧光','人物档案|基本信息与档案卡','人物小传|用一篇短文立住人物','人物关系图谱|人物羁绊与阵营',
+      '人物关系网|动态更新的关系图','性格弧光|人物随剧情的变化','配角管理|群像调度与出场表','反派塑造|动机、手段与魅力',
+      '人物标签库|性格原型与标签','对话风格|口吻与语言习惯设定','人物出场统计|戏份分布与冷落角色','视角管理|叙述人称与 POV 切换'
+    ]},
+    { g: '结构大纲', items: [
+      '大纲编辑|卷章脉络，逐层拆解','分卷结构|一部多卷的组织方式','章节管理|草稿、排序与状态','卡片大纲|一卡一事，灵活重排',
+      '雪花写作法|由一句话层层展开','三幕结构|建置、对抗与结局','起承转合|传统叙事的四段节奏','英雄之旅|十二阶段的成长弧',
+      '情节板|把桥段钉在时间轴上','场景清单|逐个场景的写作待办'
+    ]},
+    { g: '节奏与悬念', items: [
+      '幕次表|分幕编排与转场','情绪曲线|把控读者的情绪起伏','节奏图谱|张弛与快慢的分布','悬念节奏|钩子与揭晓的排布',
+      '冲突强度|冲突升级的可视化','时间线|事件先后与并行线索','多重时间线|多线并行的时序管理','事件脉络图|因果相连的事件网',
+      '章节摘要|一键生成梗概提要','卷线图|整卷走向的俯视图'
+    ]},
+    { g: '伏笔与索引', items: [
+      '伏笔追踪|埋设与回收的清单','伏笔清单|所有待回收的梗','设定索引|按关键词检索设定','词条设定|专有名词与释义库'
+    ]},
+    { g: '模板库', items: [
+      '开源整本仿写样本|完整开源作品，可整本作为仿写蓝本','场景模板|常用场景可直接套用','桥段模板|可复用的叙事结构','开场模板|多种小说开头范式','结尾模板|收束与留白的方式',
+      '章节钩子|让读者想点下一章'
+    ]},
+    { g: 'AI 写作', items: [
+      'AI 续写|顺着当前段落接着写','AI 扩写|把一句扩成一节','AI 润色|遣词造句的精细打磨','AI 改写|换个说法重讲一遍',
+      'AI 缩写|提炼与压缩篇幅','AI 起名|人物、地名与招式命名','AI 摘要|长文一键生梗概','AI 目录生成|自动排出章节树',
+      'AI 大纲生成|按题材给出骨架','AI 人物生成|自动补全角色设定','AI 世界观生成|生成自洽的世界规则','AI 情节建议|给出下一步走向',
+      'AI 对话生成|以人物口吻写对白','AI 描写生成|五感与场景描写','AI 转折建议|给出反转与冲突点','AI 章节标题|批量生成章节名',
+      'AI 伏笔埋设|智能建议埋点与回收','AI 剧情推演|演算不同分支的后果'
+    ]},
+    { g: 'AI 视听', items: [
+      'AI 生图|按描述生成插画与场景','AI 配音|为对白与旁白配上人声','AI 角色立绘|生成人物形象参考图','AI 场景插图|为章节配一张插画',
+      'AI 封面图|按题材生成封面草案','AI 分镜图|把桥段画成连环分镜','AI 有声书|整本转成有声版本','AI 语音朗读|朗读当前章节内容',
+      'AI 音效配乐|匹配场景氛围的音效与配乐'
+    ]},
+    { g: '灵感激发', items: [
+      '头脑风暴|围绕关键词发散点子','灵感激发|随机组合给你意外','联想词库|由一词牵出一串意象'
+    ]},
+    { g: '校对检查', items: [
+      '错别字检查|逐字校对与纠正','语法检查|病句与搭配问题','标点规范|中英标点与省略号用法','敏感词校验|发布前的自查清单',
+      '连续性检查|设定前后是否一致','设定一致性|跨章节比对设定','逻辑漏洞检查|找出说不通的地方','时间线冲突|发现矛盾的时间点',
+      '称呼一致性|人物称呼的前后统一'
+    ]},
+    { g: '文本分析', items: [
+      '重复用词|高频词与口头禅排查','语句通顺度|朗读式顺滑度评分','可读性评分|面向目标读者的难度','文风一致性|防止风格跳脱',
+      '相似度检测|与已有文本的相似比对','字数统计|分卷分章精确统计','段落分析|长短段与节奏诊断','对话占比|对白与叙述的比例',
+      '描写密度|环境与心理的笔墨','情节折线图|冲突与高潮的走势'
+    ]},
+    { g: '可视化视图', items: [
+      '关系图谱视图|一图看尽人物关系','势力分布图|阵营与地盘的格局','时间轴视图|横向铺开的故事线','地图编辑器|自由绘制故事地图',
+      '家谱树|宗族血缘的树状图'
+    ]},
+    { g: '排版格式', items: [
+      '自动排版|一键规范格式','对话格式化|统一引号与分段','简繁转换|简体与繁体的切换','中英标点转换|全角与半角的规范',
+      '稿纸视图|复古稿纸的书写界面'
+    ]},
+    { g: '专注效率', items: [
+      '沉浸模式|只留文字，专注写作','专注模式|屏蔽打扰的心流界面','番茄钟|二十五分钟写作节律','字数目标|每日码字目标设定',
+      '码字提醒|久坐与目标提醒','写作计划|以周为单位的安排','灵感收集箱|随手记下零散点子','待办清单|写作任务的清单管理'
+    ]},
+    { g: '版本与备份', items: [
+      '批注|在正文侧边留意见','版本对比|两稿差异一目了然','多稿并行|同一章的不同写法','自动备份|云端与本地快照'
+    ]},
+    { g: '发布与推广', items: [
+      '发布预览|按平台样式预览效果','平台适配|一键适配各平台格式','定时发布|设定章节的更新时间','封面生成|按题材生成封面草案',
+      '简介生成|一句抓人的作品简介','标签建议|按内容推荐分类标签'
+    ]}
+  ];
+
+  /* ── 图标：单线条 SVG，循环取用 ─────────────────────────────────── */
+  var ICONS = [
+    '<path d="M4 20l4-1 10-10-3-3L5 16z"/><path d="M14 6l3 3"/>',
+    '<path d="M5 4h11l3 3v13H5z"/><path d="M16 4v4h4"/>',
+    '<circle cx="12" cy="12" r="8"/><path d="M4 12h16"/><path d="M12 4c3 4 3 12 0 16"/><path d="M12 4c-3 4-3 12 0 16"/>',
+    '<circle cx="12" cy="9" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/>',
+    '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+    '<path d="M4 8h16M4 12h10M4 16h13"/>',
+    '<path d="M6 4v16"/><path d="M6 5h11l-2 3 2 3H6"/>',
+    '<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',
+    '<path d="M12 3l1.7 4.6L18 9.3l-4.3 1.7L12 15.6l-1.7-4.6L6 9.3l4.3-1.7z"/>',
+    '<path d="M4 5h16v14H4z"/><path d="m4 16 5-5 4 4 3-3 4 4"/><circle cx="9" cy="9" r="1.4"/>',
+    '<path d="M9 18h6M10 20h4"/><path d="M12 3a6 6 0 0 0-4 10.5V16h8v-2.5A6 6 0 0 0 12 3z"/>',
+    '<path d="M5 12l5 5 9-11"/>',
+    '<path d="M5 20V10M12 20V4M19 20v-7"/>',
+    '<circle cx="6" cy="6" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="12" cy="18" r="2"/><path d="M8 7l8 1M7 8l4 8M17 9l-4 7"/>',
+    '<path d="M4 6h16M8 6v13M16 6v13M4 12h16"/>',
+    '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
+    '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+    '<path d="M4 12l16-7-7 16-2-7z"/>'
+  ];
+  function ic(i) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">' + ICONS[i % ICONS.length] + '</svg>'; }
+  var GO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>';
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+  var navScroll = document.getElementById('navScroll');
+  var gallery = document.getElementById('gallery');
+  var navSub = document.getElementById('navSub');
+  var toolsMeta = document.getElementById('toolsMeta');
+  var toolsSub = document.getElementById('toolsSub');
+  var q = document.getElementById('q');
+  var toast = document.getElementById('toast');
+  var toastText = document.getElementById('toastText');
+
+  var total = 0;
+  TOOLS.forEach(function (g) { total += g.items.length; });
+
+  function toolHref(name, group) {
+    return 'qibi-tool.html?tool=' + encodeURIComponent(name) + '&g=' + encodeURIComponent(group);
+  }
+
+  /* ── 渲染左侧分类 + 右侧画廊 ───────────────────────────────────── */
+  function render() {
+    var nav = '<button type="button" class="tnav-all is-on" data-all="1" aria-pressed="true">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 8h16v11H4z"/><path d="M4 8l2-3h12l2 3M9 12h6"/></svg>'
+      + '<span>全部工具</span><span class="n">' + total + '</span></button><div class="tnav-sep"></div>';
+
+    TOOLS.forEach(function (g, gi) {
+      nav += '<button type="button" class="tgroup" data-g="' + esc(g.g) + '" title="' + esc(g.g) + '">'
+        + '<span class="ic">' + ic(gi) + '</span>'
+        + '<span class="t">' + esc(g.g) + '</span>'
+        + '<span class="n">' + pad(g.items.length) + '</span></button>';
+    });
+    navScroll.innerHTML = nav;
+
+    var out = '', n = 0;
+    TOOLS.forEach(function (g, gi) {
+      out += '<section class="tg" id="g-' + gi + '" data-od-id="tools-section" data-g="' + esc(g.g) + '">'
+        + '<div class="tg-h"><span class="mark"></span><span class="nm">' + esc(g.g) + '</span>'
+        + '<span class="line"></span><span class="n">' + pad(g.items.length) + '</span></div>'
+        + '<div class="tg-grid">';
+      g.items.forEach(function (it, ii) {
+        n++;
+        var p = it.split('|');
+        var name = p[0], lead = p[1] || '';
+        out += '<a class="tcard" href="' + toolHref(name, g.g) + '" data-name="' + esc(name) + '" data-lead="' + esc(lead) + '" data-g="' + esc(g.g) + '" title="' + esc(name) + '">'
+          + '<span class="tcard-top"><span class="tcard-ic">' + ic(n - 1) + '</span>'
+          + '<span class="tcard-tag">' + esc(g.g) + '</span></span>'
+          + '<span class="tcard-t">' + esc(name) + '</span>'
+          + '<span class="tcard-d">' + esc(lead) + '</span>'
+          + '<span class="tcard-go"><span>' + pad(n) + '</span><span class="go">打开工作页 ' + GO + '</span></span>'
+          + '</a>';
+      });
+      out += '</div></section>';
+    });
+    gallery.innerHTML = out;
+
+    navSub.textContent = total + ' 项 · ' + TOOLS.length + ' 类';
+    toolsMeta.textContent = total + ' 件';
+  }
+
+  /* ── 左侧分类跳转到对应分组（容器内滚动，不动整页） ─────────────── */
+  function jumpTo(gi) {
+    var sec = document.getElementById('g-' + gi);
+    if (!sec) return;
+    var top = sec.offsetTop - gallery.offsetTop - 6;
+    gallery.scrollTo({ top: top < 0 ? 0 : top, behavior: 'smooth' });
+  }
+  navScroll.addEventListener('click', function (e) {
+    var all = e.target.closest && e.target.closest('[data-all]');
+    if (all) { gallery.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    var b = e.target.closest && e.target.closest('.tgroup');
+    if (!b) return;
+    var gname = b.getAttribute('data-g');
+    var gi = -1;
+    for (var i = 0; i < TOOLS.length; i++) { if (TOOLS[i].g === gname) { gi = i; break; } }
+    if (gi >= 0) jumpTo(gi);
+  });
+
+  /* ── 搜索：按名称 / 说明过滤卡片，隐藏空分组 ───────────────────── */
+  function applyFilter() {
+    var term = (q.value || '').trim().toLowerCase();
+    var cards = gallery.querySelectorAll('.tcard');
+    var shown = 0;
+    Array.prototype.forEach.call(cards, function (c) {
+      var hit = !term || (c.getAttribute('data-name') || '').toLowerCase().indexOf(term) >= 0
+        || (c.getAttribute('data-lead') || '').toLowerCase().indexOf(term) >= 0
+        || (c.getAttribute('data-g') || '').toLowerCase().indexOf(term) >= 0;
+      c.classList.toggle('is-hidden', !hit);
+      if (hit) shown++;
+    });
+    Array.prototype.forEach.call(gallery.querySelectorAll('.tg'), function (s) {
+      s.classList.toggle('is-empty', s.querySelectorAll('.tcard:not(.is-hidden)').length === 0);
+    });
+    Array.prototype.forEach.call(navScroll.querySelectorAll('.tgroup'), function (b) {
+      var gname = b.getAttribute('data-g');
+      var sec = null, gs = gallery.querySelectorAll('.tg');
+      Array.prototype.forEach.call(gs, function (s) { if (s.getAttribute('data-g') === gname) sec = s; });
+      b.classList.toggle('is-empty', !!sec && sec.classList.contains('is-empty'));
+    });
+    var empty = gallery.querySelector('.gal-hit-empty');
+    if (!shown) {
+      if (!empty) {
+        empty = document.createElement('div');
+        empty.className = 'gal-empty gal-hit-empty';
+        empty.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg><p>没有找到匹配的工具，换个关键词试试。</p>';
+        gallery.appendChild(empty);
+      }
+    } else if (empty) { empty.remove(); }
+    toolsMeta.textContent = term ? (shown + ' / ' + total + ' 件') : (total + ' 件');
+  }
+  q.addEventListener('input', applyFilter);
+
+  /* ── 通知 popover ───────────────────────────────────────────────── */
+  var bell = document.getElementById('bell');
+  var pop = document.getElementById('bellPop');
+  bell.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var open = pop.classList.toggle('open');
+    bell.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  document.addEventListener('click', function (e) {
+    if (!pop.contains(e.target) && e.target !== bell) {
+      pop.classList.remove('open');
+      bell.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  function showToast(msg) {
+    toastText.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function () { toast.classList.remove('show'); }, 2000);
+  }
+
+  render();
+  /* 深链：#g=<分类名> 进入时定位到该分类 */
+  (function () {
+    var m = /(?:^|[#&])g=([^&]+)/.exec(location.hash || '');
+    if (!m) return;
+    var gname = decodeURIComponent(m[1]);
+    for (var i = 0; i < TOOLS.length; i++) {
+      if (TOOLS[i].g === gname) { setTimeout(function () { jumpTo(i); }, 60); break; }
+    }
+  })();
+})();
+</script>
+  <script src="qibi-avatar.js?v=3"></script>
+</body>
+</html>

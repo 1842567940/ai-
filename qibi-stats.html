@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>启笔 QIBI · 统计</title>
+<link rel="icon" type="image/png" href="app-icon.png" />
+<style>
+  /* ─── tokens — 沿用工作台的夜色水墨令牌 ───────────────────────────
+        统计 = 一个统一界面：左侧分组环始终在场，右侧是该模块的统计面板。
+        转动 / 点环上的分组即在右侧切换模块，统计项在面板内展开，不离开本页。 */
+  :root {
+    --bg:      oklch(15% 0.010 262);
+    --surface: oklch(23% 0.011 262);
+    --fg:      oklch(94% 0.006 90);
+    --muted:   oklch(73% 0.010 90);
+    --border:  oklch(96% 0.006 90 / 0.13);
+    --accent:  oklch(55% 0.17 28);
+
+    --ink-soft:      oklch(96% 0.006 90 / 0.055);
+    --ink-hair:      oklch(96% 0.006 90 / 0.16);
+    --ink-dash:      oklch(96% 0.006 90 / 0.26);
+    --accent-soft:   oklch(60% 0.17 28 / 0.17);
+    --accent-line:   oklch(62% 0.17 28 / 0.44);
+    --accent-ink:    oklch(98% 0.008 30);
+    --accent-deep:   oklch(47% 0.16 28);
+    --accent-bright: oklch(73% 0.15 32);
+    --scrim:         oklch(11% 0.012 262);
+
+    --font-display: 'Iowan Old Style', 'Charter', Georgia, 'Songti SC', 'STSong', 'Source Han Serif SC', 'Noto Serif SC', 'SimSun', serif;
+    --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    --font-mono:    ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+
+    --r-sm: 9px; --r-md: 12px; --r-lg: 15px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; overflow: hidden;
+    background: var(--bg); color: var(--fg);
+    font-family: var(--font-body); font-size: 14px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  .bg-photo {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: var(--bg) url("%E6%B0%B4%E5%A2%A8%E5%B0%91%E5%A5%B3-%E5%A4%9C%E8%89%B2.png") center / cover no-repeat;
+  }
+  .bg-scrim {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      linear-gradient(180deg, oklch(9% 0.012 262 / 0.05), transparent 60%, oklch(10% 0.012 262 / 0.03)),
+      linear-gradient(103deg, oklch(8% 0.012 262 / 0.05) 0%, oklch(10% 0.012 262 / 0.02) 52%, oklch(12% 0.012 262 / 0) 100%);
+  }
+  img, svg { display: block; max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  h1, h2, h3, h4, p { margin: 0; }
+  [hidden] { display: none !important; }
+  ::selection { background: var(--accent-soft); }
+
+  /* ─── shell ─────────────────────────────────────────────────────── */
+  .app {
+    position: relative; z-index: 1; height: 100vh;
+    display: grid;
+    grid-template-columns: 66px minmax(0, 1fr);
+    grid-template-rows: 58px minmax(0, 1fr);
+  }
+  .appbar {
+    grid-column: 1 / -1; grid-row: 1;
+    display: flex; align-items: center; gap: 14px; padding: 0 18px 0 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--scrim);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; flex: none; }
+  .app-icon { width: 34px; height: 34px; flex: none; border-radius: 9px; object-fit: contain; box-shadow: 0 1px 3px oklch(0% 0 0 / 0.45), 0 0 0 1px var(--border); }
+  .brand-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: 0.02em; line-height: 1.1; }
+  .brand-sub { display: block; font-family: var(--font-mono); font-size: 8.5px; color: var(--muted); letter-spacing: 0.14em; margin-top: 1px; }
+  .crumb { display: flex; align-items: center; gap: 8px; flex: none; padding-left: 14px; border-left: 1px solid var(--border); font-size: 12.5px; color: var(--muted); }
+  .crumb-sep { color: var(--ink-dash); }
+  .crumb-cur { color: var(--fg); font-weight: 500; }
+  .appbar-right { display: flex; align-items: center; gap: 9px; flex: none; margin-left: auto; }
+  .acc-chip { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 6px 11px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 12px; transition: background .14s, color .14s, border-color .14s; }
+  .acc-chip:hover { background: var(--ink-soft); color: var(--fg); border-color: var(--ink-hair); }
+  .acc-chip svg { width: 14px; height: 14px; }
+  .acc-chip b { font-family: var(--font-mono); font-weight: 500; color: var(--accent-bright); }
+  .search { display: flex; align-items: center; gap: 8px; width: 246px; padding: 6px 11px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); background: var(--surface); }
+  .search svg { width: 15px; height: 15px; flex: none; }
+  .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--fg); font: inherit; font-size: 12.5px; }
+  .search input::placeholder { color: var(--muted); }
+  .search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .icon-btn { width: 36px; height: 36px; border-radius: var(--r-sm); flex: none; position: relative; display: grid; place-items: center; background: transparent; border: 1px solid var(--border); color: var(--muted); transition: background .14s, color .14s, border-color .14s; }
+  .icon-btn:hover { background: var(--ink-soft); color: var(--fg); border-color: var(--ink-hair); }
+  .icon-btn svg { width: 17px; height: 17px; }
+  :where(.icon-btn, .rail-btn, .acc-chip, .seg button, .mp-tab, .ring-node, .ring-center):focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
+
+  /* ─── left rail ──────────────────────────────────────────────────── */
+  .rail { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 12px 0 14px; overflow: hidden; border-right: 1px solid var(--border); background: color-mix(in oklch, var(--scrim) 26%, transparent); }
+  .rail-btn { width: 54px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; border-radius: 12px; border: 1px solid transparent; background: transparent; color: var(--muted); font-size: 10px; letter-spacing: 0.02em; transition: background .14s, color .14s, border-color .14s; }
+  .rail-btn svg { width: 19px; height: 19px; }
+  .rail-btn:hover { background: var(--ink-soft); color: var(--fg); }
+  .rail-btn.is-active { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-bright); }
+  .rail-spacer { flex: 1; }
+  .rail-avatar { width: 34px; height: 34px; border-radius: 999px; flex: none; display: grid; place-items: center; color: var(--muted); background: var(--ink-soft); border: 1px dashed var(--ink-dash); }
+  .rail-avatar svg { width: 17px; height: 17px; }
+  /* ─── canvas: 统计 ───────────────────────────────────────────────── */
+  .canvas {
+    grid-column: 2; grid-row: 2; min-height: 0; overflow: hidden;
+    padding: 20px 30px 22px;
+    background:
+      radial-gradient(112% 120% at 0% 0%, color-mix(in oklch, var(--scrim) 24%, transparent), transparent 58%),
+      color-mix(in oklch, var(--scrim) 9%, transparent);
+    display: flex; flex-direction: column;
+  }
+
+  /* ─── 统一界面：左侧分组环常驻 + 右侧模块面板 ───────────────────── */
+  .stats-shell { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(340px, 0.92fr) minmax(0, 1.08fr); gap: 20px; }
+  .ring-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .rp-head { flex: none; display: flex; align-items: center; gap: 10px; padding: 0 2px 5px; }
+  .rp-kicker { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 9px; letter-spacing: .18em; color: var(--muted); }
+  .rp-kicker i { width: 15px; height: 1px; flex: none; background: var(--accent); }
+  .rp-meta { margin-left: auto; font-family: var(--font-mono); font-size: 9px; letter-spacing: .08em; color: var(--muted); }
+  .ring-box { position: relative; flex: 1; min-height: 0; container-type: size; }
+  .ring-stage {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: min(100cqw, 100cqh, 820px); height: min(100cqw, 100cqh, 820px);
+    cursor: grab; touch-action: none;
+    -webkit-user-select: none; user-select: none;
+    outline: none;
+  }
+  .ring-stage.is-drag { cursor: grabbing; }
+  .ring-stage:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 14px; border-radius: 50%; }
+  .ring-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  .ring-edge { fill: none; stroke: color-mix(in oklch, var(--fg) 17%, transparent); stroke-width: 0.32; }
+  .ring-edge-soft { stroke: color-mix(in oklch, var(--fg) 8%, transparent); }
+  .ring-tick { stroke: color-mix(in oklch, var(--fg) 22%, transparent); stroke-width: 0.26; }
+  .ring-tick.is-major { stroke: var(--accent-line); stroke-width: 0.42; }
+  .ring-nodes { position: absolute; inset: 0; }
+  .ring-node {
+    position: absolute; left: 50%; top: 50%;
+    display: flex; align-items: center; gap: 7px;
+    padding: 6px 11px 6px 9px;
+    border: 1px solid var(--border); border-radius: 999px;
+    background: color-mix(in oklch, var(--scrim) 58%, transparent);
+    color: var(--muted); white-space: nowrap;
+    transform: translate(-50%, -50%);
+    will-change: transform;
+    transition: border-color .16s, background .16s, color .16s, box-shadow .16s;
+  }
+  .ring-node i { width: 5px; height: 5px; flex: none; border-radius: 1px; background: currentColor; opacity: .55; transform: rotate(45deg); }
+  .rn-name { font-family: var(--font-display); font-size: 12.5px; font-weight: 600; letter-spacing: .04em; color: var(--fg); }
+  .rn-count { font-family: var(--font-mono); font-size: 9px; letter-spacing: .02em; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ring-node:hover { border-color: var(--ink-hair); background: color-mix(in oklch, var(--scrim) 74%, transparent); }
+  .ring-node.is-focus { border-color: var(--accent-line); background: var(--accent-soft); color: var(--accent-bright); box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 10%, transparent); }
+  .ring-node.is-focus .rn-count { color: var(--accent-bright); }
+  .ring-node.is-active { border-color: var(--accent-line); }
+  .ring-node.is-active i { opacity: 1; background: var(--accent-bright); }
+  .ring-node.is-active .rn-name { color: var(--accent-bright); }
+  .ring-mark { position: absolute; left: 50%; top: 11.5%; width: 1px; height: 14px; transform: translate(-50%, -100%); background: linear-gradient(180deg, transparent, var(--accent)); pointer-events: none; }
+  .ring-mark::after { content: ""; position: absolute; left: 50%; bottom: -2px; width: 5px; height: 5px; transform: translateX(-50%) rotate(45deg); background: var(--accent); }
+  .ring-center {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 42%; min-width: 148px; max-width: 286px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 20px 10px; border: 0; border-radius: 999px;
+    background: transparent; color: var(--fg); text-align: center;
+  }
+  .rc-name { font-family: var(--font-display); font-size: clamp(19px, 3.5vmin, 27px); font-weight: 600; letter-spacing: .09em; line-height: 1.2; text-shadow: 0 1px 18px color-mix(in oklch, var(--scrim) 82%, transparent); }
+  .rc-name.is-tick { animation: rcTick .24s ease; }
+  @keyframes rcTick { from { opacity: .25; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  .rc-meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; color: var(--muted); }
+  .rc-cue { font-size: 9.5px; letter-spacing: .18em; color: var(--accent-bright); opacity: 0; transform: translateY(2px); transition: opacity .16s, transform .16s; }
+  .ring-center:hover .rc-cue, .ring-center:focus-visible .rc-cue { opacity: 1; transform: none; }
+  .rp-hint { flex: none; padding-top: 4px; text-align: center; font-size: 10px; letter-spacing: .05em; color: var(--muted); }
+
+  /* ─── 模块面板：右侧常驻，切换模块不离开本页 ─────────────────────── */
+  .module-pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; padding: 15px 18px 14px; border: 1px solid var(--border); border-radius: var(--r-lg); background: color-mix(in oklch, var(--scrim) 54%, transparent); }
+  .mp-head { flex: none; display: flex; align-items: center; gap: 12px; padding-bottom: 11px; }
+  .mp-titles { display: flex; flex-direction: column; min-width: 0; }
+  .mp-kicker { font-family: var(--font-mono); font-size: 9px; letter-spacing: .14em; color: var(--muted); }
+  .mp-name { font-family: var(--font-display); font-size: 21px; font-weight: 600; letter-spacing: .04em; line-height: 1.15; margin-top: 3px; }
+  .mp-sub { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mp-head .d-tag { margin-left: auto; }
+  .mp-tabs { flex: none; display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 11px; border-bottom: 1px solid var(--border); }
+  .mp-tab { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border: 1px solid var(--border); border-radius: 999px; background: transparent; color: var(--muted); font-size: 10.5px; letter-spacing: .01em; transition: background .14s, color .14s, border-color .14s; }
+  .mp-tab i { font-style: normal; font-family: var(--font-mono); font-size: 8.5px; color: var(--muted); }
+  .mp-tab:hover { background: var(--ink-soft); color: var(--fg); border-color: var(--ink-hair); }
+  .mp-tab.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-bright); }
+  .mp-tab.is-on i { color: var(--accent-bright); }
+  .mp-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin-top: 13px; padding-right: 10px; display: flex; flex-direction: column; gap: 15px; scrollbar-width: thin; scrollbar-color: var(--ink-hair) transparent; }
+  .mp-body::-webkit-scrollbar { width: 8px; }
+  .mp-body::-webkit-scrollbar-thumb { background: var(--ink-hair); border-radius: 999px; }
+  .mp-tools { flex: none; display: flex; align-items: center; gap: 12px; padding: 3px 0 11px; }
+  .mp-tools .seg { margin-left: auto; }
+  .stat-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 11px 12px; align-items: start; }
+  .stat-card { display: flex; flex-direction: column; gap: 10px; padding: 12px 13px 11px; border: 1px solid var(--border); border-radius: var(--r-md); background: color-mix(in oklch, var(--scrim) 46%, transparent); transition: border-color .14s, background .14s, box-shadow .18s; scroll-margin-top: 10px; }
+  .stat-card:hover { border-color: var(--ink-hair); background: color-mix(in oklch, var(--scrim) 60%, transparent); }
+  .stat-card.is-flash { border-color: var(--accent-line); box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 12%, transparent); animation: scFlash .9s ease; }
+  @keyframes scFlash { 0% { background: var(--accent-soft); } 100% { background: color-mix(in oklch, var(--scrim) 46%, transparent); } }
+  .sc-head { display: flex; align-items: flex-start; gap: 9px; }
+  .sc-idx { flex: none; margin-top: 1px; font-family: var(--font-mono); font-size: 9.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .sc-titles { display: flex; flex-direction: column; min-width: 0; }
+  .sc-name { font-family: var(--font-display); font-size: 13.5px; font-weight: 600; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-desc { margin-top: 1px; font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-kind { flex: none; margin-left: auto; padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px; font-family: var(--font-mono); font-size: 9px; color: var(--muted); letter-spacing: .06em; }
+  .sc-chart { height: 66px; display: flex; align-items: stretch; }
+  .sc-chart > svg { width: 100%; height: 66px; }
+  .sc-chart .heat { grid-template-rows: repeat(5, 11px); grid-auto-columns: 11px; gap: 2px; align-content: center; margin: auto 0; }
+  .sc-chart .mrank { display: flex; flex-direction: column; justify-content: center; gap: 5px; width: 100%; }
+  .mrank-row { display: flex; align-items: center; gap: 7px; }
+  .mrank-row i { height: 7px; border-radius: 999px; background: color-mix(in oklch, var(--fg) 30%, transparent); }
+  .mrank-row:first-child i { background: var(--accent); }
+  .mrank-row b { flex: none; font-family: var(--font-mono); font-size: 8.5px; font-weight: 400; color: var(--muted); }
+  .mini-ring-wrap { display: flex; align-items: center; gap: 12px; }
+  .mini-ring-wrap svg { width: 62px; height: 62px; flex: none; }
+  .mini-ring-wrap .mrl { display: flex; flex-direction: column; gap: 5px; font-size: 10px; color: var(--muted); }
+  .mini-ring-wrap .mrl span { display: inline-flex; align-items: center; gap: 6px; }
+  .mini-ring-wrap .mrl i { width: 8px; height: 8px; border-radius: 2px; background: var(--ink-hair); }
+  .mini-ring-wrap .mrl i.acc { background: var(--accent); }
+
+  /* ─── 详情：在模块面板内原地展开 ─────────────────────────────────── */
+  .d-back { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px 6px 8px; border: 1px solid var(--border); border-radius: var(--r-sm); background: transparent; color: var(--muted); font-size: 11.5px; transition: background .14s, color .14s, border-color .14s; }
+  .d-back:hover { background: var(--ink-soft); color: var(--fg); border-color: var(--ink-hair); }
+  .d-back svg { width: 15px; height: 15px; }
+  .d-tag { flex: none; padding: 3px 10px; border: 1px solid var(--ink-hair); border-radius: 999px; font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; }
+  .d-tools { display: flex; align-items: center; gap: 12px; }
+  .d-src { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .06em; color: var(--muted); }
+  .seg { margin-left: auto; display: inline-flex; padding: 3px; border: 1px solid var(--border); border-radius: 999px; background: var(--ink-soft); }
+  .seg button { border: 0; background: transparent; color: var(--muted); font-size: 11px; padding: 4px 12px; border-radius: 999px; transition: background .14s, color .14s; }
+  .seg button:hover { color: var(--fg); }
+  .seg button.is-on { background: var(--accent); color: var(--accent-ink); }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; }
+  .kpi { border: 1px solid var(--border); border-radius: var(--r-md); background: color-mix(in oklch, var(--scrim) 46%, transparent); padding: 13px 15px; }
+  .kpi-l { font-size: 11.5px; color: var(--muted); margin-bottom: 7px; }
+  .kpi-v { font-family: var(--font-mono); font-size: 23px; font-weight: 600; letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+  .kpi-v small { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 3px; }
+  .kpi-d { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .kpi-d b { color: var(--accent-bright); font-weight: 600; }
+
+  .card { border: 1px solid var(--border); border-radius: var(--r-md); background: color-mix(in oklch, var(--scrim) 54%, transparent); padding: 15px 18px 14px; }
+  .card-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 13px; }
+  .card-t { font-family: var(--font-display); font-size: 14px; font-weight: 600; letter-spacing: 0.03em; }
+  .card-s { font-size: 11.5px; color: var(--muted); }
+  .card-legend { margin-left: auto; display: flex; gap: 14px; font-size: 11px; color: var(--muted); }
+  .card-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; background: color-mix(in oklch, var(--fg) 34%, transparent); }
+  .card-legend i.acc { background: var(--accent); }
+
+  .chart-svg { display: block; width: 100%; height: auto; }
+  .chart-svg .grid { stroke: var(--border); stroke-width: 1; }
+  .chart-svg .ar { fill: color-mix(in oklch, var(--fg) 15%, transparent); }
+  .chart-svg .ln { fill: none; stroke: var(--fg); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .chart-svg .bar { fill: color-mix(in oklch, var(--fg) 32%, transparent); }
+  .chart-svg .bar-hit { fill: var(--accent); }
+  .chart-svg .dot { fill: var(--accent); }
+  .chart-svg .ax { fill: var(--muted); font-size: 11px; font-family: var(--font-mono); }
+  .ring-wrap .arc { fill: none; stroke: var(--ink-hair); stroke-width: 11; }
+  .ring-wrap .arc-hit { fill: none; stroke: var(--accent); stroke-width: 11; stroke-linecap: round; }
+  .ring-wrap { display: flex; align-items: center; gap: 30px; }
+  .ring-wrap svg { flex: none; width: 148px; height: 148px; }
+
+  .rank { display: flex; flex-direction: column; }
+  .rank-row { display: grid; grid-template-columns: 24px minmax(72px, 132px) minmax(0, 1fr) 66px; align-items: center; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+  .rank-row:last-child { border-bottom: 0; }
+  .rank-i { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+  .rank-n { color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rank-bar { height: 9px; border-radius: 999px; background: var(--ink-soft); overflow: hidden; }
+  .rank-fill { height: 100%; border-radius: 999px; background: color-mix(in oklch, var(--fg) 46%, transparent); }
+  .rank-row:first-child .rank-fill { background: var(--accent); }
+  .rank-v { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+
+  .ring-wrap .rt { fill: var(--fg); font-size: 13px; font-family: var(--font-display); letter-spacing: 0.06em; }
+  .ring-legend { display: flex; flex-direction: column; gap: 9px; font-size: 12px; min-width: 0; }
+  .ring-legend .rl-row { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+  .ring-legend .rl-row i { width: 9px; height: 9px; border-radius: 2px; flex: none; background: var(--ink-hair); }
+  .ring-legend .rl-row i.acc { background: var(--accent); }
+  .ring-legend .rl-row b { margin-left: auto; font-family: var(--font-mono); font-size: 11px; font-weight: 400; }
+
+  .heat-wrap { display: flex; align-items: flex-end; gap: 18px; }
+  .heat-legend { flex: none; display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .heat-legend i { width: 11px; height: 11px; border-radius: 2px; background: var(--ink-soft); }
+  .heat-legend i.l1 { background: color-mix(in oklch, var(--fg) 20%, transparent); }
+  .heat-legend i.l2 { background: color-mix(in oklch, var(--fg) 38%, transparent); }
+  .heat-legend i.l3 { background: color-mix(in oklch, var(--fg) 58%, transparent); }
+  .heat-legend i.l4 { background: var(--accent); }
+  .d-note { font-size: 11px; color: var(--muted); margin-top: 10px; }
+
+  .heat { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 13px); grid-auto-columns: 13px; gap: 3px; }
+  .heat i { border-radius: 2px; background: var(--ink-soft); }
+  .heat i.l1 { background: color-mix(in oklch, var(--fg) 20%, transparent); }
+  .heat i.l2 { background: color-mix(in oklch, var(--fg) 38%, transparent); }
+  .heat i.l3 { background: color-mix(in oklch, var(--fg) 58%, transparent); }
+  .heat i.l4 { background: var(--accent); }
+
+  /* ─── popover ────────────────────────────────────────────────────── */
+  .rel { position: relative; }
+  .pop { position: absolute; top: 46px; right: 0; width: 280px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: 0 16px 40px oklch(0% 0 0 / 0.45); padding: 7px; z-index: 60; display: none; }
+  .pop.open { display: block; }
+  .pop-empty { padding: 22px 16px; text-align: center; font-size: 12.5px; color: var(--muted); border: 1px dashed var(--ink-dash); border-radius: var(--r-sm); }
+
+  /* ─── adapt ──────────────────────────────────────────────────────── */
+  @media (max-height: 720px) { .canvas { padding: 14px 20px 16px; } .ring-node { padding: 4px 9px 4px 8px; } .rn-count, .rc-cue { display: none; } }
+  @media (max-width: 1180px) { .crumb { display: none; } .stats-shell { grid-template-columns: minmax(300px, 0.86fr) minmax(0, 1.14fr); gap: 16px; } }
+  @media (max-width: 960px) { .mp-tab i { display: none; } .stat-cards { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 820px) { .stats-shell { grid-template-columns: 1fr; grid-template-rows: minmax(210px, 34vh) minmax(0, 1fr); gap: 12px; } .rp-head, .rp-hint { display: none; } .rn-count { display: none; } .ring-node { padding: 4px 8px; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="bg-photo" aria-hidden="true"></div>
+<div class="bg-scrim" aria-hidden="true"></div>
+
+<div class="app">
+
+  <header class="appbar" data-od-id="appbar">
+    <div class="brand">
+      <img class="app-icon" src="app-icon.png" width="34" height="34" alt="" />
+      <span>
+        <span class="brand-name">启笔</span>
+        <span class="brand-sub">QIBI · AI 小说编辑器</span>
+      </span>
+    </div>
+    <nav class="crumb" data-od-id="breadcrumb">
+      <span>工作台</span>
+      <span class="crumb-sep">/</span>
+      <span class="crumb-cur">统计</span>
+    </nav>
+
+    <div class="appbar-right">
+      <a class="acc-chip" href="qibi-accounts.html" title="账号管理 · 按平台账号聚合统计">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3.2" y="5" width="17.6" height="14" rx="2.2"/><circle cx="8.6" cy="11" r="2.2"/><path d="M5.6 16.4c.6-1.7 1.7-2.5 3-2.5s2.4.8 3 2.5"/><path d="M14.5 10h3.9M14.5 13h3.9"/></svg>
+        账号 <b id="accCount">0</b>
+      </a>
+      <label class="search" title="搜索分组或统计项">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input type="search" placeholder="搜索分组或统计项" aria-label="搜索分组或统计项" />
+      </label>
+      <div class="rel">
+        <button class="icon-btn" id="bell" aria-label="通知" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+        </button>
+        <div class="pop" id="bellPop" role="menu"><div class="pop-empty">暂无新通知</div></div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="rail" data-od-id="rail" aria-label="应用导航">
+    <a class="rail-btn" href="ai-novel-editor-home.html#free" title="创作">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M19.5 4.5c-5.6.2-9.8 3.5-11 8.8l-3.2 3.2 1.2 1.2 3.2-3.2c5.3-1.2 8.6-5.4 8.8-11z"/><path d="M5.5 18.5 11 13"/><path d="M4 20h4"/></svg>
+      <span>创作</span>
+    </a>
+    <a class="rail-btn" href="qibi-memoir.html" title="自传">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5.8 4.5h10.4a2 2 0 0 1 2 2v13H5.8z"/><path d="M5.8 17.5h12.4"/><path d="M9.2 4.5v5.6l1.9-1.4 1.9 1.4V4.5"/></svg>
+      <span>自传</span>
+    </a>
+    <a class="rail-btn" href="qibi-transmigration.html" title="穿书">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 6.9C9.9 5.3 7.3 4.8 4.5 5.3v12.9c2.8-.5 5.4 0 7.5 1.6 2.1-1.6 4.7-2.1 7.5-1.6V5.3c-2.8-.5-5.4 0-7.5 1.6z"/><path d="M12 6.9v12.9"/><path d="M12 2.6v4.6M10.2 5.4 12 7.2l1.8-1.8"/></svg>
+      <span>穿书</span>
+    </a>
+    <a class="rail-btn" href="ai-novel-editor-home.html#tools" title="工具箱">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14.7 6.3a3.5 3.5 0 0 1-4.6 4.6L5 16v3h3l5.1-5.1a3.5 3.5 0 0 1 4.6-4.6l-2 2 .7 1.4 1.4.7z"/></svg>
+      <span>工具箱</span>
+    </a>
+    <a class="rail-btn" href="ai-novel-editor-home.html#works" title="作品">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h5v12H4zM9 7h5v12H9z"/><path d="M15.4 8.4l3.8 1-3 10.6-3.8-1z"/></svg>
+      <span>作品</span>
+    </a>
+    <button class="rail-btn is-active" aria-current="page" title="统计">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 20V10M12 20V4M19 20v-6"/></svg>
+      <span>统计</span>
+    </button>
+    <a class="rail-btn" href="qibi-accounts.html" title="账号管理">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3.2" y="5" width="17.6" height="14" rx="2.2"/><circle cx="8.6" cy="11" r="2.2"/><path d="M5.6 16.4c.6-1.7 1.7-2.5 3-2.5s2.4.8 3 2.5"/><path d="M14.5 10h3.9M14.5 13h3.9"/></svg>
+      <span>账号管理</span>
+    </a>
+    <a class="rail-btn" href="qibi-materials.html" title="素材库">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 8h16v11H4z"/><path d="M4 8l2-3h12l2 3M9 12h6"/></svg>
+      <span>素材库</span>
+    </a>
+    <a class="rail-btn" href="ai-novel-editor-home.html#config" title="设置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4 6 18M18 18l-1.6-1.6M7.6 7.6 6 6"/></svg>
+      <span>设置</span>
+    </a>
+    <span class="rail-spacer"></span>
+    <span class="rail-avatar" title="未设置头像" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="9" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg>
+    </span>
+  </nav>
+
+  <main class="canvas" id="content" data-od-id="stats-canvas">
+    <div class="stats-shell" data-od-id="stats-view">
+
+      <aside class="ring-pane" aria-label="统计分组环">
+        <div class="rp-head">
+          <span class="rp-kicker"><i aria-hidden="true"></i>统计总览 · OVERVIEW</span>
+          <span class="rp-meta" id="rpMeta">10 类 · 120 项</span>
+        </div>
+        <div class="ring-box">
+          <div class="ring-stage" id="ringStage" tabindex="0" role="group" aria-label="十个统计分组：拖动或按左右方向键转动，回车切换当前分组">
+            <svg class="ring-svg" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+              <circle class="ring-edge" cx="50" cy="50" r="38.5"></circle>
+              <circle class="ring-edge ring-edge-soft" cx="50" cy="50" r="27.5"></circle>
+              <g id="ringTicks"></g>
+            </svg>
+            <div class="ring-nodes" id="ringNodes"></div>
+            <button class="ring-center" id="ringCenter" type="button" aria-label="切换到当前分组">
+              <span class="rc-name" id="rcName">—</span>
+              <span class="rc-meta" id="rcMeta">—</span>
+              <span class="rc-cue">切换模块</span>
+            </button>
+            <span class="ring-mark" aria-hidden="true"></span>
+          </div>
+        </div>
+        <p class="rp-hint">拖动 / 滚轮 / ← → 转动环 · 点分组在右侧切换模块</p>
+      </aside>
+
+      <section class="module-pane" aria-label="模块统计">
+        <div class="mp-head">
+          <div class="mp-titles">
+            <span class="mp-kicker" id="mKicker">统计模块 · MODULE</span>
+            <span class="mp-name" id="mName">—</span>
+            <span class="mp-sub" id="mSub">—</span>
+          </div>
+          <span class="d-tag" id="mTag">01 / 10</span>
+        </div>
+        <div class="mp-tabs" id="mTabs" role="tablist" aria-label="统计模块"></div>
+        <div class="mp-tools">
+          <span class="d-src">图表为示意结构 · 接入作品后自动填充</span>
+          <div class="seg" id="rangeSeg" role="tablist" aria-label="时间范围"></div>
+        </div>
+        <div class="mp-body" id="mBody" data-od-id="stats-module"></div>
+      </section>
+
+    </div>
+  </main>
+
+</div>
+
+<script>
+(function () {
+  /* ── 统计目次：按题材分组的 120 项（10 类） ──────────────────────── */
+  var GROUPS = [
+    { g: '产出总览', items: [
+      '写作统计|总览与产出报告','字数曲线|逐日码字走势','每日码字|当日有效字数','累计字数|作品全部字数',
+      '有效时长|真正在写的时长','平均速度|每小时平均字数','峰值速度|状态最好时的速度','单章字数|每章的字数分布',
+      '今日产出|今天的码字结果','本周产出|近七天的产出','本月产出|本月的累计产出','年度总览|全年写作的汇总',
+      '单章平均|平均每章字数','单日最高|个人单日纪录'
+    ]},
+    { g: '习惯与节律', items: [
+      '更新日历|断更与连载记录','码字热力图|写作习惯一目了然','写作时段|一天中何时写得最多','最佳写作时间|高产时段的识别',
+      '连续天数|保持更新的连续日','最长连续|历史最长连更纪录','断更记录|中断的日子与原因','打卡记录|目标完成的打卡',
+      '写作频率|固定节奏的稳定性','平均间隔|两次写作的间隔','目标打卡|每日字数目标与连续','目标完成率|目标达成情况',
+      '番茄钟统计|专注时段累计','专注时长|深度写作的时长','更新频率|发布节奏与规律','更新稳定性|更新节奏的波动'
+    ]},
+    { g: '进度与存稿', items: [
+      '章节完成度|各章进度与待办','卷完成度|卷的整体推进','作品进度|全书完成比例','大纲完成率|骨架的填充程度',
+      '待办章节|尚未动笔的章节','已发布章节|已上线的章节数','存稿字数|手头存稿的总量','存稿天数|存稿能撑几天更新',
+      '更新计划完成率|按计划更新的比例','完结预测|按当前速度预计完本'
+    ]},
+    { g: '人物与用词', items: [
+      '人物出场统计|戏份分布与冷落角色','人物戏份分布|主角与配角的篇幅','高频人物|出现最多的人物','冷门角色|久未登场的人物',
+      '词汇丰富度|用词重复与句式分析','高频词汇|最常出现的词','重复用词|需要替换的重复项','独特词占比|用词的独特性',
+      '平均句长|句子的平均长度','句式分布|长短句的比例','修辞使用|比喻、排比等频次','成语使用|成语的密度'
+    ]},
+    { g: '文风与节奏', items: [
+      '段落长度|长段与短段的占比','对话占比|对白所占比例','描写占比|描写所占比例','对白密度|对话推进的强度',
+      '场景转换|场景切换的频率','情绪词分布|情绪基调的走势','悬念密度|钩子出现的密度','冲突强度曲线|冲突的起伏走势',
+      '章节钩子分析|结尾的吸引力'
+    ]},
+    { g: '删改与保存', items: [
+      '删除字数|删改掉的字数','修改次数|一次写作的修改频次','保存次数|自动保存的快照数'
+    ]},
+    { g: '读者与热度', items: [
+      '数据对比|同期作品横向参照','同期作品对比|并行作品的对照','作品间对比|自己作品间的比较','榜单排名|在榜单位置的变化',
+      '题材热度|题材当下的热度','平台热度|平台整体的风向','同类均值|与同类的平均对比','追更数据|阅读、收藏与趋势',
+      '阅读量|总阅读与日阅读','收藏数|收藏的增长曲线','推荐票|推荐与月票走势','打赏记录|打赏的明细',
+      '评论数|评论与互动的量','完读率|读完某一章的比例','章节跳出|读者流失的位置','阅读留存|章节跳出与完读率',
+      '读者画像|读者的性别与偏好','峰值章节|表现最好的章节','掉粉章节|读者流失的章节','涨粉趋势|关注度的变化',
+      '来源渠道|读者从哪来','转化率|点开、追读的转化','读者互动指数|互动热度评分','社群活跃|粉丝群的活跃度',
+      '舆情概览|口碑的整体走向','关键词云|读者提及最多的词','竞品追踪|同类作品的最新动向'
+    ]},
+    { g: '稿费收益', items: [
+      '稿费结算|签约与收益明细','收益明细|每一笔的构成','订阅收入|订阅带来的收入','打赏收入|打赏带来的收入',
+      '签约状态|签约与分成的条款','月收入|按月统计的收益','年收入|按年统计的收益','千字收益|每千字的回报',
+      '收入趋势|收益的变化曲线','提现记录|提现与到账明细'
+    ]},
+    { g: '报告复盘', items: [
+      '周报月报|周期总结与建议','季度报告|一个季度的复盘','年度报告|一年的写作全景','写作习惯报告|习惯与节奏的分析',
+      '生产力报告|产出的效率分析','风格报告|文风演变的观察','AI 使用报告|AI 辅助的占比','目标复盘|对计划的回看'
+    ]},
+    { g: '分布与预警', items: [
+      '篇幅分布|各卷各章占比','字数段分布|按字数区间的分布','断更风险|预测可能的断更','疲劳预警|久写不歇的提醒',
+      '专注质量|心流时段的评分','效率对比|不同时段的效率','连载周期|从开坑到现在的时长','开坑记录|所有作品的起点',
+      '完本记录|完结作品的清单','坑位管理|未完结作品的盘点','平均完结周期|完本所需的时间'
+    ]}
+  ];
+
+  /* ── 环的状态：记住上一次转到的角度 ─────────────────────────────── */
+  var KEY = 'qibi.stats.state';
+  var START_ROT = 0;
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) { var parsed = JSON.parse(raw); if (parsed && isFinite(parsed.rot)) START_ROT = +parsed.rot; }
+  } catch (e) {}
+  function saveRot() { try { localStorage.setItem(KEY, JSON.stringify({ rot: +norm(rot).toFixed(2) })); } catch (e) {} }
+
+  /* ── DOM ────────────────────────────────────────────────────────── */
+  var ringBox   = document.querySelector('.ring-box');
+  var stage     = document.getElementById('ringStage');
+  var nodesBox  = document.getElementById('ringNodes');
+  var ticksBox  = document.getElementById('ringTicks');
+  var rcName    = document.getElementById('rcName');
+  var rcMeta    = document.getElementById('rcMeta');
+  var ringCenter = document.getElementById('ringCenter');
+  var rpMeta    = document.getElementById('rpMeta');
+  var mKicker   = document.getElementById('mKicker');
+  var mName     = document.getElementById('mName');
+  var mSub      = document.getElementById('mSub');
+  var mTag      = document.getElementById('mTag');
+  var mTabs     = document.getElementById('mTabs');
+  var mBody     = document.getElementById('mBody');
+  var rangeSeg  = document.getElementById('rangeSeg');
+  var searchInput = document.querySelector('.search input');
+  var RANGES = ['近 7 天', '近 30 天', '近 90 天'];
+  var rangeIdx = 1, activeIdx = -1;
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function norm(a) { a = a % 360; if (a > 180) a -= 360; if (a < -180) a += 360; return a; }
+
+  /* ── 环：只一个环，十个分组落在环上；转动后最近的组吸附到顶部 ───── */
+  var STEP = 360 / GROUPS.length;
+  var rot = norm(START_ROT);
+  var focusIdx = -1;
+  var reduceMotion = false;
+  try { reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+
+  (function buildTicks() {
+    var out = '';
+    for (var i = 0; i < 60; i++) {
+      var major = i % 6 === 0;
+      var a = (i * 6 - 90) * Math.PI / 180;
+      var r1 = major ? 36.0 : 36.8, r2 = major ? 38.2 : 37.8;
+      out += '<line class="ring-tick' + (major ? ' is-major' : '') + '" x1="' + (50 + Math.cos(a) * r1).toFixed(2)
+        + '" y1="' + (50 + Math.sin(a) * r1).toFixed(2)
+        + '" x2="' + (50 + Math.cos(a) * r2).toFixed(2)
+        + '" y2="' + (50 + Math.sin(a) * r2).toFixed(2) + '"></line>';
+    }
+    ticksBox.innerHTML = out;
+  })();
+
+  var nodeEls = [];
+  (function buildNodes() {
+    var out = '';
+    for (var i = 0; i < GROUPS.length; i++) {
+      var grp = GROUPS[i];
+      out += '<button class="ring-node" type="button" data-i="' + i + '" title="' + grp.g + ' · ' + grp.items.length + ' 项">'
+        + '<i aria-hidden="true"></i><span class="rn-name">' + grp.g + '</span>'
+        + '<span class="rn-count">' + pad(grp.items.length) + '</span></button>';
+    }
+    nodesBox.innerHTML = out;
+    nodeEls = Array.prototype.slice.call(nodesBox.querySelectorAll('.ring-node'));
+  })();
+
+  function nearestIndex() {
+    var best = 0, bestD = 1e9;
+    for (var i = 0; i < GROUPS.length; i++) {
+      var d = Math.abs(norm(i * STEP + rot));
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    return best;
+  }
+
+  function setFocus(idx) {
+    if (idx === focusIdx) return;
+    focusIdx = idx;
+    for (var k = 0; k < nodeEls.length; k++) nodeEls[k].classList.toggle('is-focus', k === idx);
+    var grp = GROUPS[idx];
+    rcName.textContent = grp.g;
+    rcMeta.textContent = grp.items.length + ' 项 · ' + pad(idx + 1) + ' / ' + pad(GROUPS.length);
+    rcName.classList.remove('is-tick');
+    void rcName.offsetWidth;
+    rcName.classList.add('is-tick');
+    ringCenter.setAttribute('aria-label', '切换到' + grp.g + '模块');
+  }
+
+  function updateRing() {
+    var w = stage.clientWidth || 720;
+    var R = w * 0.33;
+    for (var i = 0; i < nodeEls.length; i++) {
+      var a = (-90 + i * STEP + rot) * Math.PI / 180;
+      nodeEls[i].style.transform = 'translate(-50%, -50%) translate(' + (Math.cos(a) * R).toFixed(1) + 'px, ' + (Math.sin(a) * R).toFixed(1) + 'px)';
+    }
+    ticksBox.setAttribute('transform', 'rotate(' + rot.toFixed(2) + ' 50 50)');
+    setFocus(nearestIndex());
+  }
+
+  var animRaf = 0;
+
+  function animateRot(goal, dur) {
+    if (animRaf) cancelAnimationFrame(animRaf);
+    if (reduceMotion || !dur) { rot = norm(goal); updateRing(); saveRot(); animRaf = 0; return; }
+    var from = rot, delta = goal - rot, t0 = performance.now();
+    function tick(t) {
+      var p = Math.min(1, (t - t0) / dur);
+      var e = 1 - Math.pow(1 - p, 3);
+      rot = norm(from + delta * e);
+      updateRing();
+      if (p < 1) { animRaf = requestAnimationFrame(tick); }
+      else { animRaf = 0; setFocus(nearestIndex()); saveRot(); }
+    }
+    animRaf = requestAnimationFrame(tick);
+  }
+
+  function snapTo(idx) {
+    animateRot(rot + norm(-idx * STEP - rot), 320);
+  }
+
+  function spin(v0) {
+    if (reduceMotion) { snapTo(nearestIndex()); return; }
+    var v = Math.max(-16, Math.min(16, v0));
+    if (animRaf) cancelAnimationFrame(animRaf);
+    function frame() {
+      v *= 0.93;
+      rot = norm(rot + v);
+      updateRing();
+      if (Math.abs(v) > 0.35) { animRaf = requestAnimationFrame(frame); }
+      else { animRaf = 0; snapTo(nearestIndex()); }
+    }
+    animRaf = requestAnimationFrame(frame);
+  }
+
+  function step(dir) {
+    var target = (nearestIndex() + dir + GROUPS.length) % GROUPS.length;
+    animateRot(rot + norm(-target * STEP - rot), 280);
+  }
+
+  /* ── 拖动 / 轻扫 / 滚轮 / 方向键 ─────────────────────────────────── */
+  var dragging = false, startX = 0, startRot = 0, lastX = 0, lastT = 0, moved = 0, vel = 0;
+  var wheelTimer = 0, suppressUntil = 0, downTarget = null;
+
+  stage.addEventListener('pointerdown', function (e) {
+    if (e.button !== 0 || (e.target.closest && e.target.closest('.ring-center'))) return;
+    dragging = true; moved = 0; vel = 0;
+    startX = lastX = e.clientX; startRot = rot; lastT = performance.now();
+    downTarget = e.target;
+    if (animRaf) { cancelAnimationFrame(animRaf); animRaf = 0; }
+    stage.classList.add('is-drag');
+  });
+
+  window.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    var dx = e.clientX - startX;
+    moved = Math.max(moved, Math.abs(dx));
+    var now = performance.now();
+    var dt = Math.max(1, now - lastT);
+    vel = ((e.clientX - lastX) / dt) * 16 * 0.3;
+    lastX = e.clientX; lastT = now;
+    rot = norm(startRot + dx * 0.3);
+    updateRing();
+  });
+
+  function endDrag(canceled) {
+    if (!dragging) return;
+    dragging = false;
+    stage.classList.remove('is-drag');
+    if (canceled) { snapTo(nearestIndex()); return; }
+    if (moved < 5) {
+      suppressUntil = 0;
+      if (!(downTarget && downTarget.closest && downTarget.closest('.ring-node'))) snapTo(nearestIndex());
+      else saveRot();
+      return;
+    }
+    suppressUntil = performance.now() + 350;
+    saveRot();
+    spin(vel);
+  }
+  window.addEventListener('pointerup', function () { endDrag(false); });
+  window.addEventListener('pointercancel', function () { endDrag(true); });
+
+  stage.addEventListener('click', function (e) {
+    if (performance.now() < suppressUntil) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+
+  stage.addEventListener('wheel', function (e) {
+    if (e.ctrlKey) return;
+    e.preventDefault();
+    if (animRaf) { cancelAnimationFrame(animRaf); animRaf = 0; }
+    rot = norm(rot + Math.max(-60, Math.min(60, e.deltaY)) * 0.09);
+    updateRing();
+    clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(function () { saveRot(); snapTo(nearestIndex()); }, 180);
+  }, { passive: false });
+
+  stage.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+    else if ((e.key === 'Enter' || e.key === ' ') && e.target === stage) { e.preventDefault(); activate(nearestIndex(), true); }
+  });
+
+  nodesBox.addEventListener('click', function (e) {
+    var n = e.target.closest && e.target.closest('.ring-node');
+    if (!n) return;
+    activate(+n.getAttribute('data-i'), true);
+  });
+
+  ringCenter.addEventListener('click', function () { activate(nearestIndex(), true); });
+
+  /* ── 模块内所有统计一次性展开：每项一张卡片，直接带图形结构 ───────── */
+
+  function seedOf(s) { var h = 7; for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; } return h || 1; }
+
+  /* 示意序列：仅用于勾勒图形结构，界面不呈现任何具体数值 */
+  function series(seed, n, lo, hi) {
+    var out = [], s = seed;
+    for (var i = 0; i < n; i++) {
+      s = (s * 1103515245 + 12345) >>> 0;
+      var t = (s % 1000) / 1000;
+      var wave = 0.5 + 0.5 * Math.sin(i * 0.9 + (seed % 7));
+      out.push(lo + (hi - lo) * (0.35 * t + 0.45 * wave));
+    }
+    return out;
+  }
+
+  function sparkSvg(name) {
+    var W = 280, H = 66, padX = 4, padT = 7, padB = 7, n = 18, i;
+    var pts = series(seedOf(name), n, 0.16, 0.92), xs = [], ys = [], peak = 0;
+    for (i = 0; i < n; i++) {
+      xs.push(padX + (W - padX * 2) * (i / (n - 1)));
+      ys.push(padT + (H - padT - padB) * (1 - pts[i]));
+      if (pts[i] > pts[peak]) peak = i;
+    }
+    var d = '';
+    for (i = 0; i < n; i++) d += (i ? 'L' : 'M') + xs[i].toFixed(1) + ' ' + ys[i].toFixed(1) + ' ';
+    var area = '<path class="ar" d="M' + xs[0].toFixed(1) + ' ' + (H - padB) + ' L' + xs[0].toFixed(1) + ' ' + ys[0].toFixed(1) + ' '
+      + d.slice(1) + 'L' + xs[n - 1].toFixed(1) + ' ' + (H - padB) + ' Z"/>';
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="走势示意">'
+      + '<line class="grid" x1="' + padX + '" y1="' + (H - padB) + '" x2="' + (W - padX) + '" y2="' + (H - padB) + '"/>'
+      + area + '<path class="ln" d="' + d + '"/>'
+      + '<circle class="dot" cx="' + xs[peak].toFixed(1) + '" cy="' + ys[peak].toFixed(1) + '" r="3"/></svg>';
+  }
+
+  function miniBarSvg(name) {
+    var W = 280, H = 66, padX = 4, padT = 6, padB = 6, n = 13, i;
+    var pts = series(seedOf(name) + 11, n, 0.2, 1), peak = 0;
+    for (i = 1; i < n; i++) if (pts[i] > pts[peak]) peak = i;
+    var gap = 5, bw = (W - padX * 2 - gap * (n - 1)) / n, out = '';
+    for (i = 0; i < n; i++) {
+      var bh = (H - padT - padB) * pts[i];
+      out += '<rect class="' + (i === peak ? 'bar-hit' : 'bar') + '" x="' + (padX + i * (bw + gap)).toFixed(1)
+        + '" y="' + (H - padB - bh).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="2"/>';
+    }
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="分布示意">' + out + '</svg>';
+  }
+
+  function miniHeatSvg(name) {
+    var s = seedOf(name), cols = 22, rows = 5, i, j, out = '<div class="heat">';
+    for (j = 0; j < rows; j++) for (i = 0; i < cols; i++) {
+      s = (s * 1103515245 + 12345) >>> 0;
+      var v = s % 5;
+      out += '<i' + (v ? ' class="l' + v + '"' : '') + '></i>';
+    }
+    return out + '</div>';
+  }
+
+  function miniRingSvg() {
+    var C = 2 * Math.PI * 26, pct = 0.62;
+    return '<div class="mini-ring-wrap">'
+      + '<svg viewBox="0 0 64 64" role="img" aria-label="达成示意">'
+      + '<circle class="arc" cx="32" cy="32" r="26" fill="none" stroke-width="7"/>'
+      + '<circle class="arc-hit" cx="32" cy="32" r="26" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="' + (C * pct).toFixed(1) + ' ' + (C * (1 - pct)).toFixed(1) + '" transform="rotate(-90 32 32)"/>'
+      + '</svg>'
+      + '<span class="mrl"><span><i class="acc"></i>已完成 · 留白</span><span><i></i>待完成 · 留白</span></span>'
+      + '</div>';
+  }
+
+  function miniRankSvg(name) {
+    var vals = series(seedOf(name) + 5, 4, 0.34, 1).sort(function (a, b) { return b - a; });
+    var out = '<div class="mrank">';
+    for (var i = 0; i < vals.length; i++) {
+      out += '<div class="mrank-row"><i style="width:' + (vals[i] * 74).toFixed(0) + '%"></i><b>留白</b></div>';
+    }
+    return out + '</div>';
+  }
+
+  function classify(name) {
+    var s = name;
+    if (/热力|日历|时段|打卡|连续|断更|节律|频率|间隔|番茄|专注/.test(s)) return 'heat';
+    if (/人物|戏份|角色|高频|排名|榜|对比|竞品|峰值章节|掉粉|涨粉|来源|关键词/.test(s)) return 'rank';
+    if (/完成率|完成度|进度|大纲完成|目标|比例|占比|转化|留存|完读/.test(s)) return 'ring';
+    if (/分布|字数段|篇幅|构成|句长|句式|修辞|成语|对话|描写|情绪词|段落/.test(s)) return 'bar';
+    return 'line';
+  }
+
+  var AN = null;
+  var WL = null;
+  function fmtH(min) { return (min / 60).toFixed(min >= 600 ? 0 : 1).replace(/\.0$/, ''); }
+  function heatGrid(daily) {
+    var mx = 1; daily.forEach(function (x) { if (x.w > mx) mx = x.w; });
+    var cells = '';
+    daily.forEach(function (x) {
+      var a = x.w ? Math.min(0.92, 0.16 + 0.76 * Math.sqrt(x.w / mx)) : 0;
+      cells += '<i title="' + x.d + ' · ' + x.w + ' 字" style="width:9px;height:9px;border-radius:2px;background:' + (x.w ? 'rgba(216,180,90,' + a.toFixed(2) + ')' : 'rgba(255,255,255,.06)') + '"></i>';
+    });
+    return '<div style="display:grid;grid-template-rows:repeat(7,9px);grid-auto-flow:column;grid-auto-columns:9px;gap:2px;width:100%;overflow:hidden;padding-top:6px">' + cells + '</div>'
+      + '<div style="font-size:10px;color:var(--muted);margin-top:6px">近 ' + daily.length + ' 天 · ' + daily.filter(function (x) { return x.w > 0; }).length + ' 天有码字</div>';
+  }
+  function hourBars(hourly) {
+    var mx = Math.max.apply(null, hourly) || 1;
+    var out = '<div style="display:flex;align-items:flex-end;gap:2px;height:56px;width:100%;padding-top:4px">';
+    hourly.forEach(function (v, i) {
+      var h = Math.max(2, Math.round(v / mx * 52));
+      out += '<i title="' + pad(i) + ':00 · ' + v + ' 字" style="flex:1;height:' + h + 'px;border-radius:2px;background:' + (v ? 'rgba(216,180,90,.72)' : 'rgba(255,255,255,.06)') + '"></i>';
+    });
+    return out + '</div><div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:4px"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>';
+  }
+  function triStat(w) {
+    function row(label, v) { return '<div style="display:flex;justify-content:space-between;font-size:11px;padding:2px 0"><span style="color:var(--muted)">' + label + '</span><b>' + v + ' 字</b></div>'; }
+    return '<div style="width:100%;padding-top:6px">' + row('今日', w.today) + row('本周', w.week) + row('本月', w.month) + '</div>';
+  }
+  var GS = null;
+  function realCard(name, a) {
+    if (!a) a = {};
+    function big(n, unit) { return '<div style="display:flex;align-items:baseline;gap:6px;padding-top:8px"><b style="font-size:22px;font-weight:600">' + n + '</b><span style="font-size:11px;color:var(--muted)">' + unit + '</span></div>'; }
+    function bars(vals) {
+      if (!vals || !vals.length) return note('还没有数据');
+      var mx = Math.max(1, Math.max.apply(null, vals));
+      return '<div style="display:flex;align-items:flex-end;gap:3px;height:66px;width:100%">' + vals.map(function (v) { var h = Math.max(3, Math.round(v / mx * 58)); return '<i style="flex:1;height:' + h + 'px;border-radius:2px;background:rgba(216,180,90,.7)"></i>'; }).join('') + '</div>';
+    }
+    function note(msg) { return '<div style="opacity:.55;font-size:11px;line-height:1.7;padding-top:8px">' + msg + '</div>'; }
+    function tags(list) {
+      if (!list || !list.length) return note('没有明显重复');
+      return '<div style="display:flex;flex-wrap:wrap;gap:4px;padding-top:8px">' + list.map(function (x) { return '<span style="font-size:10px;padding:3px 7px;border:1px solid var(--border);border-radius:999px;color:var(--muted)">' + x.w + ' ' + x.n + '</span>'; }).join('') + '</div>';
+    }
+    var w = WL;
+    var days30 = w ? w.daily.slice(-30) : [];
+    var active30 = days30.filter(function (x) { return x.w > 0; }).length;
+    var sum30 = days30.reduce(function (s, x) { return s + x.w; }, 0);
+    var avg30 = active30 ? sum30 / active30 : 0;
+    var mean30 = sum30 / 30, sd = 0;
+    if (days30.length) { days30.forEach(function (x) { sd += (x.w - mean30) * (x.w - mean30); }); sd = Math.sqrt(sd / 30); }
+    var cv = sum30 ? Math.round(sd / mean30 * 100) : 0;
+    if (w) {
+      if (/字数曲线/.test(name)) return bars(w.daily.slice(-30).map(function (x) { return x.w; }));
+      if (/每日码字|今日产出/.test(name)) return big(w.today, '字');
+      if (/本周产出/.test(name)) return big(w.week, '字');
+      if (/本月产出/.test(name)) return big(w.month, '字');
+      if (/年度总览/.test(name)) return big(w.totalAdded, '字（累计记录）');
+      if (/单日最高/.test(name)) return big(w.maxDay, '字');
+      if (/有效时长/.test(name)) return big(fmtH(w.activeMinutes), '小时');
+      if (/平均速度/.test(name)) return big(w.avgSpeed, '字/小时');
+      if (/峰值速度/.test(name)) return big(w.peakHour, '字/时');
+      if (/写作统计/.test(name)) return triStat(w);
+      if (/更新日历|码字热力图/.test(name)) return heatGrid(w.daily);
+      if (/写作时段/.test(name)) return hourBars(w.hourly);
+      if (/最佳写作时间/.test(name)) {
+        var bi = w.hourly.indexOf(Math.max.apply(null, w.hourly));
+        if (!w.hourly[bi]) return note('还没有足够数据');
+        return big(pad(bi) + ':00', '高产时段');
+      }
+      if (/连续天数/.test(name)) return big(w.currentStreak, '天');
+      if (/最长连续/.test(name)) return big(w.longestStreak, '天');
+      if (/断更记录/.test(name)) return big(w.breaks, '次（近 90 天）');
+      if (/打卡记录/.test(name)) return big(w.activeDays, '天（近 90 天）');
+      if (/写作频率/.test(name)) return big(w.activeDays ? (w.activeDays / 90 * 7).toFixed(1) : '0', '天/周');
+      if (/平均间隔/.test(name)) return big(w.activeDays ? (90 / w.activeDays).toFixed(1) : '—', '天/次');
+      if (/番茄钟统计/.test(name)) return big(w.pomodoros, '个');
+      if (/专注时长/.test(name)) return big(w.activeMinutes, '分钟');
+      if (/删除字数/.test(name)) return big(w.deletedWords, '字');
+      if (/修改次数|保存次数/.test(name)) return big(w.saves, '次');
+      if (/目标打卡|目标完成率/.test(name)) {
+        if (!GS || !GS.dailyGoal) return note('未设置每日目标<br><span style="opacity:.8">在设置中填写每日目标后统计</span>');
+        var goal = +GS.dailyGoal, pct = Math.min(100, Math.round(w.today / goal * 100));
+        return big(pct + '%', '今日 ' + w.today + ' / ' + goal + ' 字');
+      }
+      if (/更新频率/.test(name)) return big((active30 / 30 * 7).toFixed(1), '天/周（近 30 天）');
+      if (/更新稳定性/.test(name)) return big('±' + cv + '%', '近 30 天波动系数');
+      if (/断更风险/.test(name)) {
+        var gap = w.lastWrite ? Math.floor((Date.now() - Date.parse(w.lastWrite)) / 86400000) : -1;
+        var risk = gap < 0 ? '无记录' : (gap >= 3 ? '高' : (gap >= 1 ? '中' : '低'));
+        return big(risk, gap >= 0 ? '距上次写作 ' + gap + ' 天' : '开始写作后判断');
+      }
+      if (/疲劳预警/.test(name)) return big(w.activeMinutes > 180 ? '注意休息' : '正常', '今日专注 ' + w.activeMinutes + ' 分钟');
+      if (/专注质量/.test(name)) return big(w.pomodoros, '个等价番茄 · ' + w.activeMinutes + ' 分钟');
+      if (/效率对比/.test(name)) { var best = Math.max.apply(null, w.hourly) || 0; return big(best, '高峰字/时 · 均 ' + Math.round((w.totalAdded || 0) / 24)); }
+      if (/连载周期/.test(name)) return big(w.ageDays, '天');
+      if (/开坑记录|坑位管理/.test(name)) return big(a.projects || 0, '部作品');
+      if (/完本记录/.test(name)) return big(0, '部已完本');
+      if (/平均完结周期/.test(name)) return note('暂无完结作品');
+    }
+    if (/累计字数|全部字数|总字数|存稿字数/.test(name)) return big(a.totalWords || 0, '字');
+    if (/单章字数|单章平均|每章|章节字数/.test(name)) return bars((a.perChapter || []).map(function (c) { return c.words; }));
+    if (/待办章节/.test(name)) return big(Math.max(0, (a.chapters || 0) - (a.chaptersWithWords || 0)), '章未动笔');
+    if (/已发布章节/.test(name)) return big(a.chaptersWithWords || 0, '章已写');
+    if (/章节完成度|作品进度/.test(name)) return big(a.completion || 0, '% 已完成');
+    if (/卷完成度/.test(name)) {
+      var vs = a.volumes || [];
+      if (!vs.length) return note('暂无卷结构');
+      var f = 0, t = 0; vs.forEach(function (v) { f += v.filled; t += v.chapters; });
+      return big(t ? Math.round(f / t * 100) : 0, '% 卷内完成');
+    }
+    if (/存稿天数/.test(name)) return avg30 ? big(Math.round((a.totalWords || 0) / avg30), '天存稿（按近30天日均）') : note('暂无码字速度');
+    if (/完结预测/.test(name)) {
+      var sp = sum30 / 30;
+      if (!sp) return note('暂无码字速度，无法预测');
+      var remain = Math.max(0, (a.chapters || 0) - (a.chaptersWithWords || 0));
+      return big(Math.ceil(remain * (a.avg || 0) / sp), '天（按近30天日均）');
+    }
+    if (/大纲完成率/.test(name)) return big(a.outline ? 100 : 0, a.outline ? '% 已填写大纲' : '% 未填写大纲');
+    if (/更新计划完成率/.test(name)) return note('暂无更新计划数据');
+    if (/人物出场|人物戏份|高频人物|戏份分布/.test(name)) {
+      var cs = (a.characters || []).slice(0, 6);
+      if (!cs.length) return note('还没有人物记录');
+      var mx = Math.max(1, Math.max.apply(null, cs.map(function (c) { return c.mentions; })));
+      return '<div style="display:flex;flex-direction:column;gap:4px;width:100%">' + cs.map(function (c) {
+        return '<div style="display:flex;align-items:center;gap:6px"><span style="width:3.6em;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden">' + c.name + '</span><span style="flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,.06);position:relative;display:block"><i style="position:absolute;inset:0;width:' + Math.round(c.mentions / mx * 100) + '%;background:rgba(216,180,90,.75);border-radius:4px"></i></span><b style="font-size:10px;color:var(--muted)">' + c.mentions + '</b></div>';
+      }).join('') + '</div>';
+    }
+    if (/冷门角色/.test(name)) { var cold = (a.characters || []).filter(function (c) { return !c.mentions; }); return big(cold.length, '人未出场'); }
+    if (/词汇丰富度|独特词占比/.test(name)) return big((a.lexicalRichness || 0) + '%', '独有二元词占比');
+    if (/高频词汇/.test(name)) return tags((a.topBigrams || []).slice(0, 8));
+    if (/重复用词/.test(name)) { var rp = (a.topBigrams || []).filter(function (x) { return x.n > 1; }).slice(0, 8); return rp.length ? tags(rp) : note('没有明显重复'); }
+    if (/平均句长/.test(name)) return big(a.avgSent || 0, '字/句');
+    if (/句式分布/.test(name)) return bars([a.shortSentences || 0, Math.max(0, (a.sentences || 0) - (a.longSentences || 0) - (a.shortSentences || 0)), a.longSentences || 0]);
+    if (/段落长度/.test(name)) return big(a.avgPara || 0, '字/段 · 最长 ' + (a.maxPara || 0));
+    if (/对话占比|对白密度/.test(name)) return big(a.dialogueRatio || 0, '% 对白');
+    if (/描写占比/.test(name)) return big(Math.max(0, 100 - (a.dialogueRatio || 0)), '% 非对白（近似）');
+    if (/篇幅分布/.test(name)) return bars((a.volumes || []).map(function (v) { return v.words; }));
+    if (/字数段分布/.test(name)) {
+      var cs2 = a.perChapter || [], b = [0, 0, 0, 0];
+      cs2.forEach(function (c) { var n = c.words; b[n < 500 ? 0 : n < 1500 ? 1 : n < 3000 ? 2 : 3]++; });
+      return bars(b);
+    }
+    if (/周报月报/.test(name)) return w ? big(w.week, '字 · 本周') : note('暂无写作记录');
+    if (/年度报告/.test(name)) return w ? big(w.totalAdded, '字 · 累计记录') : note('暂无写作记录');
+    if (/写作习惯报告/.test(name)) return w ? big(w.activeDays, '天 · 近90天有码字') : note('暂无写作记录');
+    if (/生产力报告/.test(name)) return w ? big(w.avgSpeed, '字/小时 · 有效写作') : note('暂无写作记录');
+    if (/风格报告/.test(name)) return big(a.dialogueRatio || 0, '% 对白 · ' + (a.lexicalRichness || 0) + '% 独有词');
+    if (/AI 使用报告/.test(name)) return note('暂无 AI 调用日志');
+    if (/目标复盘/.test(name)) return (GS && GS.dailyGoal && w) ? big(w.today + ' / ' + GS.dailyGoal, '字 · 今日目标') : note('未设置每日目标');
+    if (/读者|热度|榜单|收藏|推荐|打赏|评论|完读|留存|画像|掉粉|涨粉|来源|转化|社群|舆情|竞品|稿费|收益|订阅|签约|收入|提现|千字|对比|均值/.test(name)) {
+      return note('暂无数据源<br><span style="opacity:.8">接入平台后可见</span>');
+    }
+    if (/场景转换|情绪词|悬念|冲突强度|章节钩子|修辞|成语/.test(name)) {
+      return note('暂未统计<br><span style="opacity:.8">需要更细的文本分析</span>');
+    }
+    return note('暂无数据源');
+  }
+
+  var KIND = { line: '走势', bar: '分布', heat: '热力', ring: '达成', rank: '排名' };
+
+  function statCard(name, desc, gi, i) {
+    var type = classify(name);
+    var inner = (AN || WL)
+      ? realCard(name, AN || {})
+      : '<div style="opacity:.55;font-size:11px;line-height:1.7;padding-top:8px">未选择作品<br><span style="opacity:.8">从首页打开作品后统计</span></div>';
+    return '<article class="stat-card" data-name="' + name + '" data-cat="' + GROUPS[gi].g + '" id="sc-' + gi + '-' + i + '">'
+      + '<header class="sc-head"><span class="sc-idx">' + pad(i + 1) + '</span>'
+      + '<span class="sc-titles"><span class="sc-name">' + name + '</span>'
+      + '<span class="sc-desc">' + (desc || '') + '</span></span>'
+      + '<span class="sc-kind">' + KIND[type] + '</span></header>'
+      + '<div class="sc-chart">' + inner + '</div></article>';
+  }
+
+  function buildModule(grp, gi) {
+    var out = '<div class="stat-cards">';
+    for (var i = 0; i < grp.items.length; i++) {
+      var parts = grp.items[i].split('|');
+      out += statCard(parts[0], parts[1] || '', gi, i);
+    }
+    return out + '</div>';
+  }
+
+  /* ── 环与模块同页：点环 / 点标签切换模块，详情在原地展开 ────────── */
+  function groupIndex(name) {
+    for (var i = 0; i < GROUPS.length; i++) if (GROUPS[i].g === name) return i;
+    return -1;
+  }
+
+  function findStat(name) {
+    for (var g = 0; g < GROUPS.length; g++) {
+      for (var i = 0; i < GROUPS[g].items.length; i++) {
+        var parts = GROUPS[g].items[i].split('|');
+        if (parts[0] === name) return { gi: g, grp: GROUPS[g], desc: parts[1] || '' };
+      }
+    }
+    return null;
+  }
+
+  function markActive(idx) {
+    for (var i = 0; i < nodeEls.length; i++) nodeEls[i].classList.toggle('is-active', i === idx);
+  }
+
+  function renderTabs() {
+    var out = '';
+    for (var i = 0; i < GROUPS.length; i++) {
+      out += '<button class="mp-tab' + (i === activeIdx ? ' is-on' : '') + '" type="button" role="tab"'
+        + ' data-mi="' + i + '" aria-selected="' + (i === activeIdx ? 'true' : 'false') + '">'
+        + '<i>' + pad(i + 1) + '</i>' + GROUPS[i].g + '</button>';
+    }
+    mTabs.innerHTML = out;
+  }
+
+  function paintRanges() {
+    var out = '';
+    for (var i = 0; i < RANGES.length; i++) {
+      out += '<button type="button" role="tab" data-range="' + i + '" class="' + (i === rangeIdx ? 'is-on' : '') + '"'
+        + ' aria-selected="' + (i === rangeIdx ? 'true' : 'false') + '">' + RANGES[i] + '</button>';
+    }
+    rangeSeg.innerHTML = out;
+  }
+
+  function fillModule(idx, sync) {
+    if (idx < 0 || idx >= GROUPS.length) return;
+    var grp = GROUPS[idx];
+    activeIdx = idx;
+    mKicker.textContent = '统计模块 · MODULE ' + pad(idx + 1) + ' / ' + pad(GROUPS.length);
+    mName.textContent = grp.g;
+    mSub.textContent = '共 ' + grp.items.length + ' 项 · 全部指标已直接展开';
+    mTag.textContent = pad(idx + 1) + ' / ' + pad(GROUPS.length);
+    mBody.innerHTML = buildModule(grp, idx);
+    mBody.scrollTop = 0;
+    markActive(idx);
+    renderTabs();
+    paintRanges();
+    if (sync !== false) setHash('g=' + encodeURIComponent(grp.g));
+  }
+
+  function alignInstant(idx) {
+    rot = norm(-idx * STEP);
+    updateRing();
+    saveRot();
+  }
+
+  function activate(idx, animate, sync) {
+    if (idx < 0 || idx >= GROUPS.length) return;
+    fillModule(idx, sync);
+    if (animate) animateRot(rot + norm(-idx * STEP - rot), 320);
+    else alignInstant(idx);
+  }
+
+  function scrollToStat(name) {
+    var cards = mBody.querySelectorAll('.stat-card');
+    var card = null;
+    for (var i = 0; i < cards.length; i++) if (cards[i].getAttribute('data-name') === name) { card = cards[i]; break; }
+    if (!card) return;
+    var top = card.getBoundingClientRect().top - mBody.getBoundingClientRect().top + mBody.scrollTop - 10;
+    mBody.scrollTo({ top: Math.max(0, top), behavior: reduceMotion ? 'auto' : 'smooth' });
+    card.classList.remove('is-flash');
+    void card.offsetWidth;
+    card.classList.add('is-flash');
+    setTimeout(function () { card.classList.remove('is-flash'); }, 1600);
+  }
+
+  function focusStat(name, sync) {
+    var hit = findStat(name);
+    if (!hit) return false;
+    if (activeIdx !== hit.gi) {
+      fillModule(hit.gi, false);
+      alignInstant(hit.gi);
+    }
+    scrollToStat(name);
+    if (sync !== false) setHash('s=' + encodeURIComponent(name));
+    return true;
+  }
+
+  function setHash(frag) {
+    try { history.replaceState(null, '', location.pathname + location.search + '#' + frag); }
+    catch (e) { try { location.hash = frag; } catch (e2) {} }
+  }
+
+  rangeSeg.addEventListener('click', function (e) {
+    var r = e.target.closest && e.target.closest('[data-range]');
+    if (!r) return;
+    var v = +r.getAttribute('data-range');
+    if (v === rangeIdx) return;
+    rangeIdx = v;
+    paintRanges();
+  });
+
+  mTabs.addEventListener('click', function (e) {
+    var tab = e.target.closest && e.target.closest('[data-mi]');
+    if (!tab) return;
+    activate(+tab.getAttribute('data-mi'), true);
+  });
+
+  if (searchInput) {
+    searchInput.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      var q = searchInput.value.trim();
+      if (!q) return;
+      var gi = groupIndex(q);
+      if (gi >= 0) { activate(gi, true); return; }
+      var hit = findStat(q);
+      if (hit) { activate(hit.gi, true); focusStat(q); return; }
+      for (var g = 0; g < GROUPS.length; g++) {
+        for (var i = 0; i < GROUPS[g].items.length; i++) {
+          var nm = GROUPS[g].items[i].split('|')[0];
+          if (nm.indexOf(q) >= 0) { activate(g, true); focusStat(nm); return; }
+        }
+      }
+    });
+  }
+
+  /* 深链：#g=<模块> 打开模块；#s=<统计项> 定位到该项卡片 */
+  function applyHash() {
+    var h = location.hash || '';
+    if (h.indexOf('#s=') === 0) {
+      var name = decodeURIComponent(h.slice(3));
+      if (focusStat(name, false)) return;
+    }
+    if (h.indexOf('#g=') === 0) {
+      var gi = groupIndex(decodeURIComponent(h.slice(3)));
+      if (gi >= 0) { activate(gi, false, false); return; }
+    }
+    if (activeIdx < 0) fillModule(nearestIndex(), false);
+  }
+  window.addEventListener('hashchange', applyHash);
+
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () { updateRing(); }).observe(ringBox);
+  }
+  window.addEventListener('resize', updateRing);
+
+  updateRing();
+  applyHash();
+
+  /* ── 账号概览：读取本机已登记的账号数 ───────────────────────────── */
+  try {
+    var accRaw = localStorage.getItem('qibi.accounts.state');
+    var accData = accRaw ? JSON.parse(accRaw) : null;
+    var accEl = document.getElementById('accCount');
+    if (accEl) accEl.textContent = String(accData && Array.isArray(accData.accounts) ? accData.accounts.length : 0);
+  } catch (e) {}
+
+  /* ── 通知气泡 ───────────────────────────────────────────────────── */
+  var bell = document.getElementById('bell');
+  var pop = document.getElementById('bellPop');
+  bell.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var open2 = pop.classList.toggle('open');
+    bell.setAttribute('aria-expanded', open2 ? 'true' : 'false');
+  });
+  document.addEventListener('click', function (e) {
+    if (!pop.contains(e.target) && e.target !== bell) {
+      pop.classList.remove('open');
+      bell.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  /* ── 实时分析：读后端 /api/analytics + /api/writelog ── */
+  (function () {
+    var pid = ''; try { pid = new URLSearchParams(location.search).get('project') || localStorage.getItem('qibi.project') || ''; } catch (e) { }
+    if (!pid) return;
+    Promise.all([
+      fetch('/api/analytics?project=' + pid).then(function (r) { return r.json(); }).catch(function () { return null; }),
+      fetch('/api/writelog?project=' + pid).then(function (r) { return r.json(); }).catch(function () { return null; }),
+      fetch('/api/settings').then(function (r) { return r.json(); }).catch(function () { return null; })
+    ]).then(function (rs) {
+      if (rs[0] && rs[0].ok !== false) AN = rs[0];
+      if (rs[1] && rs[1].ok !== false && !rs[1].error) WL = rs[1];
+      GS = rs[2] || null;
+      try { fillModule(activeIdx >= 0 ? activeIdx : (typeof nearestIndex === 'function' ? nearestIndex() : 0), true); } catch (e) { }
+    }).catch(function () { });
+  })();
+})();
+</script>
+  <script src="qibi-avatar.js?v=3"></script>
+</body>
+</html>

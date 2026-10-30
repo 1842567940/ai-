@@ -1,0 +1,22 @@
+{
+  "name": "qibi",
+  "productName": "启笔",
+  "version": "1.1.0",
+  "description": "启笔 · AI 小说编辑器 —— 夜色水墨的写作工作台：12 屏前端 + 本地 Node 后端 + Electron 桌面壳",
+  "main": "desktop/main.js",
+  "scripts": {
+    "start": "node qibi-server.cjs",
+    "desktop": "electron ."
+  },
+  "keywords": [
+    "ai",
+    "novel",
+    "writing",
+    "editor",
+    "electron",
+    "deepseek",
+    "chinese"
+  ],
+  "license": "UNLICENSED",
+  "private": true
+}

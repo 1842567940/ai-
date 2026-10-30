@@ -1,0 +1,410 @@
+{
+  "schema": "open-design.design-manifest.v1",
+  "title": "4ad68746-78e3-4dfe-9d1c-41a192ce5712",
+  "entryFile": "ai-novel-editor-home.html",
+  "sourceFiles": {
+    "all": [
+      "启笔-封面-惊鸿照影-1.png",
+      "启笔-封面-惊鸿照影.png",
+      "启笔-AI-1-1.png",
+      "启笔-AI-1.png",
+      "水墨少女-夜色.png",
+      "新建文本文档.txt",
+      "ai-novel-editor-home.html",
+      "app-icon.png",
+      "download.png",
+      "drawing-2026-10-17T23-35-32-852Z.png",
+      "image-1.png",
+      "image-10.png",
+      "image-11.png",
+      "image-12.png",
+      "image-13.png",
+      "image-14.png",
+      "image-15.png",
+      "image-16.png",
+      "image-17.png",
+      "image-18.png",
+      "image-19.png",
+      "image-2.png",
+      "image-20.png",
+      "image-21.png",
+      "image-22.png",
+      "image-23.png",
+      "image-24.png",
+      "image-25.png",
+      "image-26.png",
+      "image-27.png",
+      "image-28.png",
+      "image-29.png",
+      "image-3.png",
+      "image-30.png",
+      "image-31.png",
+      "image-32.png",
+      "image-33.png",
+      "image-34.png",
+      "image-35.png",
+      "image-36.png",
+      "image-37.png",
+      "image-38.png",
+      "image-39.png",
+      "image-4.png",
+      "image-40.png",
+      "image-41.png",
+      "image-42.png",
+      "image-43.png",
+      "image-44.png",
+      "image-45.png",
+      "image-46.png",
+      "image-47.png",
+      "image-48.png",
+      "image-49.png",
+      "image-5.png",
+      "image-50.png",
+      "image-51.png",
+      "image-52.png",
+      "image-53.png",
+      "image-54.png",
+      "image-55.png",
+      "image-56.png",
+      "image-57.png",
+      "image-58.png",
+      "image-59.png",
+      "image-6.png",
+      "image-60.png",
+      "image-61.png",
+      "image-62-1.png",
+      "image-62.png",
+      "image-63.png",
+      "image-64.png",
+      "image-65.png",
+      "image-66.png",
+      "image-67.png",
+      "image-68.png",
+      "image-69.png",
+      "image-7.png",
+      "image-70.png",
+      "image-71.png",
+      "image-8.png",
+      "image-9.png",
+      "image.png",
+      "qibi-accounts.html",
+      "qibi-materials.html",
+      "qibi-memoir.html",
+      "qibi-mode.html",
+      "qibi-settings.html",
+      "qibi-stats.html",
+      "qibi-studio.html",
+      "qibi-tool.html",
+      "qibi-tools.html",
+      "qibi-transmigration.html",
+      "qibi-work.html"
+    ],
+    "html": [
+      "ai-novel-editor-home.html",
+      "qibi-accounts.html",
+      "qibi-materials.html",
+      "qibi-memoir.html",
+      "qibi-mode.html",
+      "qibi-settings.html",
+      "qibi-stats.html",
+      "qibi-studio.html",
+      "qibi-tool.html",
+      "qibi-tools.html",
+      "qibi-transmigration.html",
+      "qibi-work.html"
+    ],
+    "css": [],
+    "scriptsAndComponents": [],
+    "assets": [
+      "启笔-封面-惊鸿照影-1.png",
+      "启笔-封面-惊鸿照影.png",
+      "启笔-AI-1-1.png",
+      "启笔-AI-1.png",
+      "水墨少女-夜色.png",
+      "新建文本文档.txt",
+      "app-icon.png",
+      "download.png",
+      "drawing-2026-10-17T23-35-32-852Z.png",
+      "image-1.png",
+      "image-10.png",
+      "image-11.png",
+      "image-12.png",
+      "image-13.png",
+      "image-14.png",
+      "image-15.png",
+      "image-16.png",
+      "image-17.png",
+      "image-18.png",
+      "image-19.png",
+      "image-2.png",
+      "image-20.png",
+      "image-21.png",
+      "image-22.png",
+      "image-23.png",
+      "image-24.png",
+      "image-25.png",
+      "image-26.png",
+      "image-27.png",
+      "image-28.png",
+      "image-29.png",
+      "image-3.png",
+      "image-30.png",
+      "image-31.png",
+      "image-32.png",
+      "image-33.png",
+      "image-34.png",
+      "image-35.png",
+      "image-36.png",
+      "image-37.png",
+      "image-38.png",
+      "image-39.png",
+      "image-4.png",
+      "image-40.png",
+      "image-41.png",
+      "image-42.png",
+      "image-43.png",
+      "image-44.png",
+      "image-45.png",
+      "image-46.png",
+      "image-47.png",
+      "image-48.png",
+      "image-49.png",
+      "image-5.png",
+      "image-50.png",
+      "image-51.png",
+      "image-52.png",
+      "image-53.png",
+      "image-54.png",
+      "image-55.png",
+      "image-56.png",
+      "image-57.png",
+      "image-58.png",
+      "image-59.png",
+      "image-6.png",
+      "image-60.png",
+      "image-61.png",
+      "image-62-1.png",
+      "image-62.png",
+      "image-63.png",
+      "image-64.png",
+      "image-65.png",
+      "image-66.png",
+      "image-67.png",
+      "image-68.png",
+      "image-69.png",
+      "image-7.png",
+      "image-70.png",
+      "image-71.png",
+      "image-8.png",
+      "image-9.png",
+      "image.png"
+    ]
+  },
+  "screens": [
+    {
+      "file": "ai-novel-editor-home.html",
+      "role": "product-screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "qibi-accounts.html",
+      "role": "screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "qibi-materials.html",
+      "role": "screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "qibi-memoir.html",
+      "role": "screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "qibi-mode.html",
+      "role": "screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "qibi-settings.html",
+      "role": "screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "qibi-stats.html",
+      "role": "screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "qibi-studio.html",
+      "role": "screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "qibi-tool.html",
+      "role": "screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "qibi-tools.html",
+      "role": "screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "qibi-transmigration.html",
+      "role": "screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "qibi-work.html",
+      "role": "screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    }
+  ],
+  "screenFilePolicy": {
+    "mode": "screen-file-first",
+    "entryFileRole": "primary-screen",
+    "rules": [
+      "Each distinct user-facing screen or surface must be delivered and implemented as its own file/route.",
+      "If a landing page is present or requested, keep it in landing.html and do not merge it into the product app screen.",
+      "When multiple HTML screens exist, index.html is a launcher/overview only; it must not be treated as the combined final UI.",
+      "Keep product app screens, landing pages, platform screens, and OS widget surfaces separate in production code."
+    ]
+  },
+  "appModules": [
+    "Identify domain-specific in-app modules from the exported UI; do not reduce them to generic cards.",
+    "For each major module, implement purpose, default/loading/empty/error/success states, and responsive behavior.",
+    "Keep app modules separate from OS home-screen widgets in the production component model."
+  ],
+  "osWidgets": [
+    "If the export includes home-screen, lock-screen, Live Activity, tablet glance, or Android widget surfaces, implement them as platform quick-access surfaces outside the app UI.",
+    "If none are present, do not invent OS widgets unless the product requirements request them."
+  ],
+  "landingPage": {
+    "detection": "Inspect files and screen names for a marketing/landing page surface. If present, keep it separate from product app screens.",
+    "requiredSections": [
+      "hero",
+      "value props",
+      "product proof/screenshots",
+      "feature proof",
+      "CTA"
+    ]
+  },
+  "tokens": {
+    "source": [
+      "ai-novel-editor-home.html"
+    ],
+    "required": [
+      "background",
+      "surface",
+      "foreground",
+      "muted text",
+      "border",
+      "accent",
+      "radius",
+      "shadow",
+      "spacing",
+      "type scale",
+      "motion"
+    ],
+    "note": "Extract/freeze tokens before framework implementation so coding tools do not substitute default theme colors or typography."
+  },
+  "interactions": {
+    "source": [
+      "ai-novel-editor-home.html"
+    ],
+    "requiredStates": [
+      "default",
+      "hover",
+      "focus",
+      "active",
+      "disabled",
+      "loading",
+      "empty",
+      "error",
+      "success"
+    ],
+    "requiredBehaviors": [
+      "forms/validation where present",
+      "tabs/filters where present",
+      "dialogs/sheets/drawers where present",
+      "copy/generate/share actions where present",
+      "player or quick controls where present"
+    ],
+    "note": "If the prototype is static, derive missing behavior from visible controls and document it before coding."
+  },
+  "responsiveViewports": [
+    {
+      "name": "mobile-compact",
+      "width": 360,
+      "height": 800,
+      "category": "mobile",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "mobile-standard",
+      "width": 390,
+      "height": 844,
+      "category": "mobile",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "mobile-large",
+      "width": 430,
+      "height": 932,
+      "category": "mobile",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "foldable-small-tablet",
+      "width": 600,
+      "height": 960,
+      "category": "foldable-tablet",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "tablet-portrait",
+      "width": 820,
+      "height": 1180,
+      "category": "tablet",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "tablet-landscape",
+      "width": 1024,
+      "height": 768,
+      "category": "tablet",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "laptop",
+      "width": 1366,
+      "height": 768,
+      "category": "desktop",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "category": "desktop",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "wide",
+      "width": 1920,
+      "height": 1080,
+      "category": "wide",
+      "mustAvoidHorizontalScroll": true
+    }
+  ],
+  "implementationChecklist": [
+    "Open entryFile first and map screens, modules, tokens, and interactions.",
+    "Extract tokens before writing framework components.",
+    "Implement app-specific modules with real states instead of generic card grids.",
+    "Preserve or rebuild JS interactions for meaningful UX actions.",
+    "Validate screenshots at desktop/tablet/mobile viewports with no horizontal overflow.",
+    "Keep landing pages, in-app modules, and OS widgets as separate implementation surfaces."
+  ]
+}

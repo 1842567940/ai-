@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>启笔 QIBI · 作品</title>
+<link rel="icon" type="image/png" href="app-icon.png" />
+<style>
+  :root {
+    --bg:      oklch(15% 0.010 262);
+    --surface: oklch(23% 0.011 262);
+    --fg:      oklch(94% 0.006 90);
+    --muted:   oklch(73% 0.010 90);
+    --border:  oklch(96% 0.006 90 / 0.13);
+    --accent:  oklch(55% 0.17 28);
+
+    --ink-soft:      oklch(96% 0.006 90 / 0.055);
+    --ink-hair:      oklch(96% 0.006 90 / 0.16);
+    --ink-dash:      oklch(96% 0.006 90 / 0.26);
+    --accent-soft:   oklch(60% 0.17 28 / 0.17);
+    --accent-line:   oklch(62% 0.17 28 / 0.44);
+    --accent-bright: oklch(73% 0.15 32);
+    --accent-ink:    oklch(98% 0.008 30);
+    --scrim:         oklch(11% 0.012 262);
+
+    --font-display: 'Iowan Old Style', 'Charter', Georgia, 'Songti SC', 'STSong', 'Source Han Serif SC', 'Noto Serif SC', 'SimSun', serif;
+    --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    --font-mono:    ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+
+    --r-sm: 9px; --r-md: 12px; --r-lg: 15px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; overflow: hidden;
+    background: var(--bg); color: var(--fg);
+    font-family: var(--font-body); font-size: 14px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  .bg-photo {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: var(--bg) url("%E6%B0%B4%E5%A2%A8%E5%B0%91%E5%A5%B3-%E5%A4%9C%E8%89%B2.png") center / cover no-repeat;
+  }
+  .bg-scrim {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      linear-gradient(180deg, oklch(9% 0.012 262 / 0.05), transparent 60%, oklch(10% 0.012 262 / 0.03)),
+      linear-gradient(103deg, oklch(8% 0.012 262 / 0.05) 0%, oklch(10% 0.012 262 / 0.02) 52%, oklch(12% 0.012 262 / 0) 100%);
+  }
+  img, svg { display: block; max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  h1, h2, h3, h4, p { margin: 0; }
+  :where(button, select, input, textarea, a, [tabindex]):focus-visible {
+    outline: 2px solid var(--accent-bright); outline-offset: 2px;
+  }
+
+  .app {
+    position: relative; z-index: 1; height: 100vh;
+    display: grid; grid-template-columns: 66px minmax(0, 1fr);
+    grid-template-rows: 58px minmax(0, 1fr);
+  }
+  .appbar {
+    grid-column: 1 / -1; grid-row: 1;
+    display: flex; align-items: center; gap: 14px; padding: 0 18px 0 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--scrim);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; flex: none; }
+  .app-icon { width: 34px; height: 34px; flex: none; border-radius: 9px; object-fit: contain; box-shadow: 0 1px 3px oklch(0% 0 0 / 0.45), 0 0 0 1px var(--border); }
+  .brand-name { font-family: var(--font-display); font-size: 16px; font-weight: 600; letter-spacing: 0.02em; line-height: 1.1; }
+  .brand-sub { display: block; font-family: var(--font-mono); font-size: 8.5px; color: var(--muted); letter-spacing: 0.14em; margin-top: 1px; }
+  .crumb { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 0 1 auto; padding-left: 14px; border-left: 1px solid var(--border); font-size: 12.5px; color: var(--muted); }
+  .crumb-sep { color: var(--ink-dash); }
+  .crumb-cur { color: var(--fg); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+  .app-note { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; flex: none; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; color: var(--muted); }
+  .app-note i { width: 6px; height: 6px; border-radius: 999px; background: var(--accent-bright); flex: none; }
+
+  .rail { grid-column: 1; grid-row: 2; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 12px 0 14px; overflow: hidden; border-right: 1px solid var(--border); background: color-mix(in oklch, var(--scrim) 26%, transparent); }
+  .rail-btn { width: 54px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; border-radius: 12px; border: 1px solid transparent; background: transparent; color: var(--muted); font-size: 10px; letter-spacing: 0.02em; transition: background .14s, color .14s, border-color .14s; }
+  .rail-btn svg { width: 19px; height: 19px; }
+  .rail-btn:hover { background: var(--ink-soft); color: var(--fg); }
+  .rail-btn.is-active { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-bright); }
+  .rail-spacer { flex: 1; }
+  .rail-avatar { width: 34px; height: 34px; border-radius: 999px; flex: none; display: grid; place-items: center; color: var(--muted); background: var(--ink-soft); border: 1px dashed var(--ink-dash); }
+  .rail-avatar svg { width: 17px; height: 17px; }
+
+  .canvas { grid-column: 2; grid-row: 2; min-height: 0; overflow: hidden; }
+  .page { height: 100%; overflow-y: auto; padding: 14px 18px 30px; scrollbar-width: thin; scrollbar-color: var(--ink-dash) transparent; }
+  .page-in { width: 100%; max-width: 1180px; margin: 0 auto; }
+
+  .back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px; padding: 4px 2px; border: 0; background: transparent; color: var(--muted); font-size: 11px; transition: color .14s; }
+  .back:hover { color: var(--fg); }
+  .back svg { width: 13px; height: 13px; }
+
+  /* ─── hero：封面 + 书名 + 简介 ─────────────────────────────────── */
+  .hero {
+    display: flex; align-items: stretch; gap: 22px;
+    padding: 18px; border-radius: var(--r-lg); border: 1px solid var(--border);
+    background: color-mix(in oklch, var(--scrim) 44%, transparent);
+    backdrop-filter: blur(16px) saturate(1.05);
+    -webkit-backdrop-filter: blur(16px) saturate(1.05);
+  }
+  .wcover {
+    position: relative; flex: none; width: 168px; aspect-ratio: 3 / 4;
+    border-radius: var(--r-md); overflow: hidden;
+    border: 1px solid var(--border); box-shadow: 0 16px 38px oklch(4% 0.01 262 / 0.45);
+  }
+  .wcover.has-img { border-style: solid; }
+  .wcover > img { width: 100%; height: 100%; object-fit: cover; }
+  .wcover > img[hidden] { display: none; }
+  .wcover-fallback { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; padding: 14px; }
+  .wcover-fallback[hidden] { display: none; }
+  .wcover-fallback::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, oklch(8% 0.01 262 / 0.35)); pointer-events: none; }
+  .wf-seal {
+    position: absolute; top: 12px; left: 12px; z-index: 1;
+    width: 27px; height: 27px; display: grid; place-items: center;
+    border: 1px solid var(--accent-line); border-radius: 4px;
+    background: var(--accent-soft); color: var(--accent-bright);
+    font-family: var(--font-display); font-size: 14px; line-height: 1;
+  }
+  .wf-title { position: relative; z-index: 1; font-family: var(--font-display); font-size: 21px; font-weight: 600; line-height: 1.35; letter-spacing: 0.05em; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+  .wf-k { position: relative; z-index: 1; font-family: var(--font-mono); font-size: 7.5px; letter-spacing: 0.14em; color: var(--muted); }
+  .wcover.cov-0 { background: color-mix(in oklch, var(--surface) 60%, oklch(80% 0.010 262 / 0.28)); }
+  .wcover.cov-1 { background: color-mix(in oklch, var(--surface) 60%, oklch(78% 0.020 250 / 0.30)); }
+  .wcover.cov-2 { background: color-mix(in oklch, var(--surface) 60%, oklch(78% 0.030 30 / 0.26)); }
+  .wcover.cov-3 { background: color-mix(in oklch, var(--surface) 60%, oklch(76% 0.030 150 / 0.24)); }
+  .wcover.cov-4 { background: color-mix(in oklch, var(--surface) 60%, var(--accent) 22%); }
+
+  .hinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .kicker { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.16em; color: var(--muted); }
+  .kicker b { color: var(--accent-bright); font-weight: 600; letter-spacing: 0.1em; }
+  .work-title { margin: 5px 0 8px; font-family: var(--font-display); font-size: clamp(23px, 2.6vw, 32px); font-weight: 600; line-height: 1.22; letter-spacing: 0.015em; word-break: break-word; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border); background: var(--ink-soft); color: var(--muted); font-size: 9.5px; letter-spacing: 0.02em; }
+  .chip.hot { border-color: var(--accent-line); background: var(--accent-soft); color: var(--accent-bright); }
+  .intro { margin: 12px 0 16px; max-width: 64ch; font-size: 12.5px; line-height: 1.85; color: color-mix(in oklch, var(--fg) 86%, transparent); white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+  .intro.is-empty { color: var(--muted); font-style: normal; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: var(--r-sm); border: 1px solid var(--border);
+    background: transparent; color: var(--fg); font-size: 12px; line-height: 1.4;
+    transition: background .14s, border-color .14s, color .14s;
+  }
+  .btn:hover { background: var(--ink-soft); border-color: var(--ink-hair); }
+  .btn svg { width: 14px; height: 14px; }
+  .btn.primary { border-color: var(--accent-line); background: var(--accent); color: var(--accent-ink); }
+  .btn.primary:hover { background: color-mix(in oklch, var(--accent) 84%, oklch(0% 0 0)); }
+  .btn.ghost { border-color: transparent; color: var(--muted); }
+  .btn.ghost:hover { border-color: var(--border); color: var(--fg); }
+
+  /* ─── 目录 + 侧栏 ─────────────────────────────────────────────── */
+  .wdoc { display: grid; grid-template-columns: minmax(0, 1fr) 296px; gap: 12px; margin-top: 12px; align-items: start; }
+  .panel {
+    border-radius: var(--r-md); border: 1px solid var(--border);
+    background: color-mix(in oklch, var(--scrim) 42%, transparent);
+    backdrop-filter: blur(16px) saturate(1.05);
+    -webkit-backdrop-filter: blur(16px) saturate(1.05);
+    overflow: hidden;
+  }
+  .p-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 11px 14px 9px; border-bottom: 1px solid var(--border); }
+  .p-kicker { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.16em; color: var(--muted); }
+  .p-head h2 { margin-top: 2px; font-family: var(--font-display); font-size: 17px; font-weight: 600; letter-spacing: 0.02em; }
+  .p-tools { display: flex; align-items: center; gap: 8px; flex: none; }
+  .ch-count { font-family: var(--font-mono); font-size: 9px; color: var(--muted); letter-spacing: 0.06em; white-space: nowrap; }
+  .mini { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 7px; border: 1px solid var(--border); background: transparent; color: var(--fg); font-size: 10.5px; white-space: nowrap; transition: .14s; }
+  .mini:hover { background: var(--ink-soft); border-color: var(--ink-hair); }
+  .mini.primary { border-color: var(--accent-line); background: var(--accent-soft); color: var(--accent-bright); }
+  .mini.primary:hover { background: color-mix(in oklch, var(--accent) 24%, transparent); }
+
+  .ch-list { padding: 6px; }
+  .ch-row { position: relative; display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; transition: background .14s, border-color .14s; }
+  .ch-row:hover, .ch-row:focus-visible { background: var(--ink-soft); border-color: var(--border); }
+  .ch-no { flex: none; width: 22px; font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 0.04em; }
+  .ch-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .ch-title { font-family: var(--font-display); font-size: 13.5px; font-weight: 600; letter-spacing: 0.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ch-sub { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.06em; color: var(--muted); }
+  .ch-go { flex: none; display: inline-flex; align-items: center; gap: 4px; font-size: 9.5px; color: var(--accent-bright); opacity: 0; transform: translateX(-3px); transition: .14s; }
+  .ch-go svg { width: 12px; height: 12px; }
+  .ch-row:hover .ch-go, .ch-row:focus-visible .ch-go { opacity: 1; transform: translateX(0); }
+  .ch-del { flex: none; width: 20px; height: 20px; display: grid; place-items: center; border: 0; border-radius: 5px; background: transparent; color: var(--muted); font-size: 13px; line-height: 1; opacity: 0; transition: .14s; }
+  .ch-row:hover .ch-del, .ch-del:focus-visible { opacity: 1; }
+  .ch-del:hover { color: var(--accent-bright); background: var(--ink-soft); }
+  .ch-empty { margin: 8px 6px 12px; padding: 26px 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; border: 1px dashed var(--ink-dash); border-radius: 9px; }
+  .ch-empty svg { width: 24px; height: 24px; color: var(--muted); opacity: .6; }
+  .ch-empty p { max-width: 380px; font-size: 11px; line-height: 1.75; color: var(--muted); }
+
+  .aside { position: sticky; top: 0; display: flex; flex-direction: column; gap: 12px; }
+  .meta-list { display: flex; flex-direction: column; padding: 6px 14px 10px; }
+  .meta-line { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px dotted var(--ink-hair); }
+  .meta-line:last-child { border-bottom: 0; }
+  .meta-line dt { font-size: 10px; color: var(--muted); }
+  .meta-line dd { margin: 0; font-family: var(--font-mono); font-size: 9.5px; color: var(--fg); text-align: right; word-break: break-all; }
+  .tip { padding: 12px 14px 10px; }
+  .tip p { font-size: 10.5px; line-height: 1.75; color: var(--muted); }
+  .danger-link { margin-top: 10px; padding: 8px 0 2px; width: 100%; border: 0; border-top: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 10.5px; text-align: left; transition: color .14s; }
+  .danger-link:hover { color: var(--accent-bright); }
+
+  /* ─── empty shelf ─────────────────────────────────────────────── */
+  .empty-wrap { height: 100%; min-height: 420px; display: grid; place-items: center; padding: 20px; }
+  .empty-card { width: min(440px, 100%); padding: 30px 28px; text-align: center; border-radius: var(--r-lg); border: 1px dashed var(--ink-dash); background: color-mix(in oklch, var(--scrim) 40%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+  .empty-card svg { width: 34px; height: 34px; margin: 0 auto 12px; color: var(--muted); opacity: .7; }
+  .empty-card h1 { margin: 6px 0 8px; font-family: var(--font-display); font-size: 25px; font-weight: 600; }
+  .empty-card p { font-size: 12px; line-height: 1.8; color: var(--muted); }
+  .empty-card .actions { justify-content: center; margin-top: 18px; }
+
+  /* ─── modals ──────────────────────────────────────────────────── */
+  .w-modal { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: oklch(6% 0.01 262 / 0.62); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .w-modal[hidden] { display: none; }
+  .m-card { width: min(540px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 16px; border-radius: var(--r-lg); border: 1px solid var(--border); background: var(--surface); box-shadow: 0 28px 80px oklch(4% 0.01 262 / 0.6); scrollbar-width: thin; }
+  .m-kicker { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.16em; color: var(--muted); }
+  .m-title { margin: 3px 0 13px; font-family: var(--font-display); font-size: 20px; font-weight: 600; }
+  .edit-grid { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 14px; }
+  .ep-cover { width: 96px; aspect-ratio: 3 / 4; border-radius: 8px; border: 1px solid var(--border); background-size: cover; background-position: center; }
+  .fields { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field > span { font-size: 10.5px; color: var(--muted); }
+  .field input, .field textarea { width: 100%; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--border); background: var(--ink-soft); color: var(--fg); font: inherit; font-size: 12px; resize: none; }
+  .field input:focus, .field textarea:focus { outline: 0; border-color: var(--accent-line); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .swatch-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .swatch-row > span { font-size: 10px; color: var(--muted); margin-right: 2px; }
+  .swatch { width: 20px; height: 26px; padding: 0; border-radius: 5px; border: 1px solid var(--border); }
+  .swatch.is-on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .swatch.cov-0 { background: color-mix(in oklch, var(--surface) 60%, oklch(80% 0.010 262 / 0.28)); }
+  .swatch.cov-1 { background: color-mix(in oklch, var(--surface) 60%, oklch(78% 0.020 250 / 0.30)); }
+  .swatch.cov-2 { background: color-mix(in oklch, var(--surface) 60%, oklch(78% 0.030 30 / 0.26)); }
+  .swatch.cov-3 { background: color-mix(in oklch, var(--surface) 60%, oklch(76% 0.030 150 / 0.24)); }
+  .swatch.cov-4 { background: color-mix(in oklch, var(--surface) 60%, var(--accent) 22%); }
+  .cover-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cover-tools .mini { padding: 3px 8px; font-size: 10px; }
+  .m-err { min-height: 15px; margin: 2px 0 0; font-size: 10px; color: var(--accent-bright); }
+  .m-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 6px; }
+  .m-b { padding: 6px 13px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--fg); font-size: 11.5px; }
+  .m-b:hover { background: var(--ink-soft); }
+  .m-b.primary { border-color: var(--accent-line); background: var(--accent); color: var(--accent-ink); }
+  .m-b.primary:hover { background: color-mix(in oklch, var(--accent) 84%, oklch(0% 0 0)); }
+
+  @media (max-width: 1020px) {
+    .wdoc { grid-template-columns: minmax(0, 1fr); }
+    .aside { position: static; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 820px) {
+    .hero { flex-direction: column; gap: 16px; }
+    .wcover { width: 138px; }
+    .intro { -webkit-line-clamp: 5; }
+    .aside { grid-template-columns: minmax(0, 1fr); }
+    .crumb .crumb-cur { max-width: 150px; }
+  }
+  @media (max-width: 620px) {
+    .page { padding: 10px 10px 24px; }
+    .hero { padding: 14px; }
+    .edit-grid { grid-template-columns: minmax(0, 1fr); }
+    .ep-cover { display: none; }
+    .app-note { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-photo" aria-hidden="true"></div>
+<div class="bg-scrim" aria-hidden="true"></div>
+
+<div class="app">
+  <header class="appbar" data-od-id="appbar">
+    <a class="brand" href="ai-novel-editor-home.html" aria-label="启笔 · 工作台">
+      <img class="app-icon" src="app-icon.png" alt="" />
+      <span>
+        <span class="brand-name">启笔</span>
+        <span class="brand-sub">QIBI · WORK</span>
+      </span>
+    </a>
+    <nav class="crumb" aria-label="面包屑">
+      <span>工作台</span><span class="crumb-sep">/</span>
+      <a href="ai-novel-editor-home.html#works">作品</a><span class="crumb-sep">/</span>
+      <span class="crumb-cur" id="crumbWork">作品详情</span>
+    </nav>
+    <span class="app-note" id="saveNote"><i></i>本机草稿 · 自动存档</span>
+  </header>
+
+  <nav class="rail" data-od-id="rail" aria-label="应用导航">
+    <a class="rail-btn" href="ai-novel-editor-home.html#free" title="创作">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M19.5 4.5c-5.6.2-9.8 3.5-11 8.8l-3.2 3.2 1.2 1.2 3.2-3.2c5.3-1.2 8.6-5.4 8.8-11z"/><path d="M5.5 18.5 11 13"/><path d="M4 20h4"/></svg>
+      <span>创作</span>
+    </a>
+    <a class="rail-btn" href="qibi-memoir.html" title="自传">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5.8 4.5h10.4a2 2 0 0 1 2 2v13H5.8z"/><path d="M5.8 17.5h12.4"/><path d="M9.2 4.5v5.6l1.9-1.4 1.9 1.4V4.5"/></svg>
+      <span>自传</span>
+    </a>
+    <a class="rail-btn" href="qibi-transmigration.html" title="穿书">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 6.9C9.9 5.3 7.3 4.8 4.5 5.3v12.9c2.8-.5 5.4 0 7.5 1.6 2.1-1.6 4.7-2.1 7.5-1.6V5.3c-2.8-.5-5.4 0-7.5 1.6z"/><path d="M12 6.9v12.9"/><path d="M12 2.6v4.6M10.2 5.4 12 7.2l1.8-1.8"/></svg>
+      <span>穿书</span>
+    </a>
+    <a class="rail-btn" href="ai-novel-editor-home.html#tools" title="工具箱">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14.7 6.3a3.5 3.5 0 0 1-4.6 4.6L5 16v3h3l5.1-5.1a3.5 3.5 0 0 1 4.6-4.6l-2 2 .7 1.4 1.4.7z"/></svg>
+      <span>工具箱</span>
+    </a>
+    <a class="rail-btn is-active" href="ai-novel-editor-home.html#works" aria-current="page" title="作品">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h5v12H4zM9 7h5v12H9z"/><path d="M15.4 8.4l3.8 1-3 10.6-3.8-1z"/></svg>
+      <span>作品</span>
+    </a>
+    <a class="rail-btn" href="qibi-stats.html" title="统计">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 20V10M12 20V4M19 20v-6"/></svg>
+      <span>统计</span>
+    </a>
+    <a class="rail-btn" href="qibi-accounts.html" title="账号管理">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3.2" y="5" width="17.6" height="14" rx="2.2"/><circle cx="8.6" cy="11" r="2.2"/><path d="M5.6 16.4c.6-1.7 1.7-2.5 3-2.5s2.4.8 3 2.5"/><path d="M14.5 10h3.9M14.5 13h3.9"/></svg>
+      <span>账号管理</span>
+    </a>
+    <a class="rail-btn" href="qibi-materials.html" title="素材库">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 8h16v11H4z"/><path d="M4 8l2-3h12l2 3M9 12h6"/></svg>
+      <span>素材库</span>
+    </a>
+    <a class="rail-btn" href="ai-novel-editor-home.html#config" title="设置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4 6 18M18 18l-1.6-1.6M7.6 7.6 6 6"/></svg>
+      <span>设置</span>
+    </a>
+    <span class="rail-spacer"></span>
+    <span class="rail-avatar" title="未设置头像" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="9" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg>
+    </span>
+  </nav>
+
+  <main class="canvas" data-od-id="work-canvas">
+    <div class="page">
+      <div class="page-in">
+        <div class="empty-wrap" id="emptyState" hidden>
+          <div class="empty-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 7h5v12H4zM9 7h5v12H9z"/><path d="M15.4 8.4l3.8 1-3 10.6-3.8-1z"/></svg>
+            <span class="kicker">WORKS · EMPTY</span>
+            <h1>书架还空着</h1>
+            <p>先在作品页新建一部作品，再回来补上封面、简介与章节。</p>
+            <div class="actions">
+              <a class="btn primary" href="ai-novel-editor-home.html#works">回到书架新建</a>
+              <a class="btn ghost" href="ai-novel-editor-home.html#free">直接起笔</a>
+            </div>
+          </div>
+        </div>
+
+        <div id="detail" hidden>
+          <a class="back" href="ai-novel-editor-home.html#works">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5l-7 7 7 7"/></svg>
+            <span>返回书架</span>
+          </a>
+
+          <section class="hero" aria-label="作品信息">
+            <div class="wcover cov-0" id="wcover">
+              <img id="coverImg" alt="" hidden />
+              <span class="wcover-fallback" id="coverFallback">
+                <span class="wf-seal" aria-hidden="true">启</span>
+                <span class="wf-title" id="coverTitle">未命名作品</span>
+                <span class="wf-k">QIBI · LOCAL DRAFT</span>
+              </span>
+            </div>
+            <div class="hinfo">
+              <span class="kicker">WORK · <b id="workNo">NO. 01</b></span>
+              <h1 class="work-title" id="workTitle">未命名作品</h1>
+              <div class="chips">
+                <span class="chip">本机草稿</span>
+                <span class="chip hot" id="chipCh">未起笔</span>
+                <span class="chip" id="chipCover">封面色 · 墨青</span>
+              </div>
+              <p class="intro" id="workIntro"></p>
+              <div class="actions">
+                <a class="btn primary" id="goStudio" href="qibi-studio.html">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M14 6l4 4"/></svg>
+                  <span>继续创作</span>
+                </a>
+                <button class="btn" id="editBtn" type="button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+                  <span>编辑资料</span>
+                </button>
+                <a class="btn ghost" href="ai-novel-editor-home.html#works">回到书架</a>
+              </div>
+            </div>
+          </section>
+
+          <div class="wdoc">
+            <section class="panel" aria-label="章节目录">
+              <header class="p-head">
+                <div>
+                  <span class="p-kicker">CONTENTS</span>
+                  <h2>目录</h2>
+                </div>
+                <div class="p-tools">
+                  <span class="ch-count" id="chCount">共 0 章</span>
+                  <button class="mini primary" id="addChBtn" type="button">＋ 添加章节</button>
+                </div>
+              </header>
+              <div class="ch-list" id="chList"></div>
+            </section>
+
+            <aside class="aside">
+              <section class="panel" aria-label="作品信息">
+                <header class="p-head">
+                  <div>
+                    <span class="p-kicker">DETAILS</span>
+                    <h2>作品信息</h2>
+                  </div>
+                </header>
+                <dl class="meta-list">
+                  <div class="meta-line"><dt>作品编号</dt><dd id="infoNo">W-0001</dd></div>
+                  <div class="meta-line"><dt>存档位置</dt><dd>本机浏览器</dd></div>
+                  <div class="meta-line"><dt>章节</dt><dd id="infoCh">0 章</dd></div>
+                  <div class="meta-line"><dt>状态</dt><dd id="infoState">未起笔</dd></div>
+                </dl>
+              </section>
+              <section class="panel tip">
+                <p>作品资料与章节只保存在本机。进入创作台后，可以继续写正文、调整节奏与文风；目录与简介随时回来修改。</p>
+                <button class="danger-link" id="delBtn" type="button">删除这部作品</button>
+              </section>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="w-modal" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editTitle" hidden>
+  <div class="m-card">
+    <span class="m-kicker">EDIT WORK</span>
+    <h2 class="m-title" id="editTitle">编辑作品资料</h2>
+    <div class="edit-grid">
+      <div class="ep-cover cov-0" id="epCover" aria-hidden="true"></div>
+      <div class="fields">
+        <label class="field">
+          <span>作品名称</span>
+          <input id="eName" type="text" placeholder="给这部作品起个名字" autocomplete="off" />
+        </label>
+        <label class="field">
+          <span>作品简介</span>
+          <textarea id="eIntro" rows="4" placeholder="一两句话，说明它讲什么"></textarea>
+        </label>
+        <div class="swatch-row" aria-label="封面色">
+          <span>封面色</span>
+          <button class="swatch cov-0" type="button" data-swatch="0" aria-label="墨青"></button>
+          <button class="swatch cov-1" type="button" data-swatch="1" aria-label="雾蓝"></button>
+          <button class="swatch cov-2" type="button" data-swatch="2" aria-label="赭石"></button>
+          <button class="swatch cov-3" type="button" data-swatch="3" aria-label="苔绿"></button>
+          <button class="swatch cov-4" type="button" data-swatch="4" aria-label="印泥"></button>
+        </div>
+        <div class="cover-tools">
+          <button class="mini" id="pickCover" type="button">上传封面图</button>
+          <button class="mini" id="clearCover" type="button">移除封面图</button>
+          <input id="coverFile" type="file" accept="image/*" hidden />
+        </div>
+        <p class="m-err" id="editErr" role="alert"></p>
+      </div>
+    </div>
+    <div class="m-actions">
+      <button class="m-b" id="editCancel" type="button">取消</button>
+      <button class="m-b primary" id="editSave" type="button">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="w-modal" id="chModal" role="dialog" aria-modal="true" aria-labelledby="chTitle" hidden>
+  <div class="m-card">
+    <span class="m-kicker">NEW CHAPTER</span>
+    <h2 class="m-title" id="chTitle">添加章节</h2>
+    <label class="field">
+      <span>章节名</span>
+      <input id="chName" type="text" placeholder="例如：第一章 夜行" autocomplete="off" />
+    </label>
+    <p class="m-err" id="chErr" role="alert"></p>
+    <div class="m-actions">
+      <button class="m-b" id="chCancel" type="button">取消</button>
+      <button class="m-b primary" id="chSave" type="button">添加</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var KEY = 'qibi.workbench.state';
+  var COVER_LABELS = ['墨青', '雾蓝', '赭石', '苔绿', '印泥'];
+  var $ = function (id) { return document.getElementById(id); };
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function pad(n, w) { n = String(n); while (n.length < (w || 2)) n = '0' + n; return n; }
+
+  var store = { works: null };
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') store = parsed;
+    }
+  } catch (e) {}
+  if (!Array.isArray(store.works)) store.works = [];
+
+  function saveStore() {
+    try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) { }
+    if (QB_PROJ && work) {
+      try {
+        fetch('/api/projects/' + QB_PROJ, {
+          method: 'PATCH', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ title: work.n || '未命名作品' })
+        });
+        fetch('/api/projects/' + QB_PROJ + '/book', {
+          method: 'PUT', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            name: work.n || '未命名作品',
+            chapters: (work.ch || []).map(function (c, i) {
+              if (typeof c === 'string') return { title: c, content: '' };
+              return { id: c.id, title: c.t || c.n || ('第' + (i + 1) + '章'), content: c.body || c.content || '' };
+            })
+          })
+        });
+      } catch (e) { }
+    }
+    return true;
+  }
+
+  var works = store.works.filter(function (w) { return w && (w.n || w.i); });
+  var idx = parseInt(new URLSearchParams(location.search).get('w'), 10);
+  if (isNaN(idx) || idx < 0 || idx >= works.length) idx = 0;
+  var work = works.length ? works[idx] : null;
+  var QB_PROJ = ''; try { QB_PROJ = new URLSearchParams(location.search).get('project') || localStorage.getItem('qibi.project') || ''; } catch (e) { }
+
+  var els = {
+    empty: $('emptyState'), detail: $('detail'), crumb: $('crumbWork'), saveNote: $('saveNote'),
+    cover: $('wcover'), coverImg: $('coverImg'), coverFallback: $('coverFallback'), coverTitle: $('coverTitle'),
+    workNo: $('workNo'), title: $('workTitle'), chipCh: $('chipCh'), chipCover: $('chipCover'),
+    intro: $('workIntro'), goStudio: $('goStudio'), editBtn: $('editBtn'),
+    chCount: $('chCount'), chList: $('chList'), addChBtn: $('addChBtn'),
+    infoNo: $('infoNo'), infoCh: $('infoCh'), infoState: $('infoState'), delBtn: $('delBtn'),
+    editModal: $('editModal'), epCover: $('epCover'), eName: $('eName'), eIntro: $('eIntro'),
+    editErr: $('editErr'), editCancel: $('editCancel'), editSave: $('editSave'),
+    pickCover: $('pickCover'), clearCover: $('clearCover'), coverFile: $('coverFile'),
+    chModal: $('chModal'), chName: $('chName'), chErr: $('chErr'), chCancel: $('chCancel'), chSave: $('chSave')
+  };
+
+  function chapters() { return Array.isArray(work.ch) ? work.ch : []; }
+  function titleOf() { return (work && work.n) ? work.n : '未命名作品'; }
+  function covOf() { var c = parseInt(work && work.c, 10); return isNaN(c) ? 0 : ((c % 5) + 5) % 5; }
+
+  var savedTimer = 0;
+  function flashSaved() {
+    els.saveNote.innerHTML = '<i></i>已存档 · ' + pad(new Date().getHours()) + ':' + pad(new Date().getMinutes());
+    clearTimeout(savedTimer);
+    savedTimer = setTimeout(function () {
+      els.saveNote.innerHTML = '<i></i>本机草稿 · 自动存档';
+    }, 2200);
+  }
+
+  function fmtAt(ts) {
+    var d = new Date(ts);
+    if (!ts || isNaN(d.getTime())) return '';
+    return (d.getMonth() + 1) + ' 月 ' + d.getDate() + ' 日 ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+
+  function renderCover() {
+    var title = titleOf(), cov = covOf();
+    els.cover.className = 'wcover cov-' + cov;
+    if (work.cover) {
+      els.coverImg.hidden = false;
+      els.coverImg.src = work.cover;
+      els.coverImg.alt = title + ' 封面';
+      els.coverFallback.hidden = true;
+      els.cover.classList.add('has-img');
+      els.chipCover.textContent = '封面 · 自选图';
+    } else {
+      els.coverImg.hidden = true;
+      els.coverImg.removeAttribute('src');
+      els.coverImg.alt = '';
+      els.coverFallback.hidden = false;
+      els.coverTitle.textContent = title;
+      els.chipCover.textContent = '封面色 · ' + COVER_LABELS[cov];
+    }
+  }
+
+  function renderChapters() {
+    var chs = chapters();
+    els.chCount.textContent = '共 ' + chs.length + ' 章';
+    els.chipCh.textContent = chs.length ? ('已建 ' + chs.length + ' 章') : '未起笔';
+    els.infoCh.textContent = chs.length + ' 章';
+    els.infoState.textContent = chs.length ? '本机草稿 · 已建目录' : '本机草稿 · 未起笔';
+
+    if (!chs.length) {
+      els.chList.innerHTML = '<div class="ch-empty">'
+        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 20V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v14"/><path d="M9 8h6M9 12h4"/><path d="M3 20h18"/></svg>'
+        + '<p>还没有章节。先为这部作品添加第一章，或者直接去创作台起笔。</p>'
+        + '<button class="mini" id="emptyAddCh" type="button">添加第一章</button>'
+        + '</div>';
+      var emptyAdd = $('emptyAddCh');
+      if (emptyAdd) emptyAdd.addEventListener('click', openChModal);
+      return;
+    }
+
+    var out = '';
+    for (var i = 0; i < chs.length; i++) {
+      var c = chs[i] || {};
+      var t = c.t ? c.t : ('第 ' + (i + 1) + ' 章');
+      out += '<div class="ch-row" role="button" tabindex="0" data-ch="' + i + '" aria-label="打开章节 ' + esc(t) + '">'
+        + '<span class="ch-no">' + pad(i + 1) + '</span>'
+        + '<span class="ch-main"><span class="ch-title">' + esc(t) + '</span>'
+        + '<span class="ch-sub">' + (c.at ? '添加于 ' + fmtAt(c.at) + ' · ' : '') + '未起笔</span></span>'
+        + '<span class="ch-go">进入创作台<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5l7 7-7 7"/></svg></span>'
+        + '<button class="ch-del" type="button" data-ch-del="' + i + '" aria-label="删除章节 ' + esc(t) + '">×</button>'
+        + '</div>';
+    }
+    els.chList.innerHTML = out;
+  }
+
+  function renderPage() {
+    if (!work) {
+      els.empty.hidden = false;
+      els.detail.hidden = true;
+      document.title = '启笔 QIBI · 作品';
+      return;
+    }
+    els.empty.hidden = true;
+    els.detail.hidden = false;
+    var t = titleOf();
+    document.title = '启笔 QIBI · ' + t;
+    els.crumb.textContent = t;
+    els.title.textContent = t;
+    els.workNo.textContent = 'NO. ' + pad(idx + 1, 2);
+    els.infoNo.textContent = 'W-' + pad(idx + 1, 4);
+    els.intro.textContent = work.i ? work.i : '还没有简介。点「编辑资料」写一段，让读者一眼知道这部作品讲什么。';
+    els.intro.classList.toggle('is-empty', !work.i);
+    renderCover();
+    renderChapters();
+  }
+
+  function flashErr(node, text) {
+    node.textContent = text;
+  }
+
+  /* ── 编辑资料 ───────────────────────────────────────────────── */
+  var pendingCover = null;
+  var pendingCov = 0;
+
+  function paintEpCover() {
+    var src = '';
+    if (pendingCover === null) src = (work && work.cover) ? work.cover : '';
+    else if (typeof pendingCover === 'string' && pendingCover.indexOf('data:image/') === 0) src = pendingCover;
+    els.epCover.className = 'ep-cover cov-' + pendingCov;
+    els.epCover.style.backgroundImage = src ? 'url("' + src + '")' : '';
+  }
+
+  function markSwatch() {
+    Array.prototype.forEach.call(els.editModal.querySelectorAll('[data-swatch]'), function (b) {
+      b.classList.toggle('is-on', parseInt(b.getAttribute('data-swatch'), 10) === pendingCov && !els.epCover.style.backgroundImage);
+    });
+  }
+
+  function openEdit() {
+    pendingCover = null;
+    pendingCov = covOf();
+    els.eName.value = work.n || '';
+    els.eIntro.value = work.i || '';
+    flashErr(els.editErr, '');
+    paintEpCover();
+    markSwatch();
+    els.editModal.hidden = false;
+    setTimeout(function () { els.eName.focus(); }, 30);
+  }
+  function closeEdit() { els.editModal.hidden = true; }
+
+  els.editBtn.addEventListener('click', openEdit);
+  els.editCancel.addEventListener('click', closeEdit);
+  els.editModal.addEventListener('click', function (e) { if (e.target === els.editModal) closeEdit(); });
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-swatch]'), function (b) {
+    b.addEventListener('click', function () {
+      pendingCov = parseInt(b.getAttribute('data-swatch'), 10) || 0;
+      pendingCover = '';
+      els.coverFile.value = '';
+      paintEpCover();
+      markSwatch();
+      flashErr(els.editErr, '');
+    });
+  });
+
+  els.pickCover.addEventListener('click', function () { els.coverFile.click(); });
+  els.coverFile.addEventListener('change', function () {
+    var f = els.coverFile.files && els.coverFile.files[0];
+    if (!f) return;
+    if (f.type.indexOf('image/') !== 0) { flashErr(els.editErr, '请选择图片文件。'); return; }
+    if (f.size > 1.5 * 1024 * 1024) { flashErr(els.editErr, '封面图请控制在 1.5MB 以内，本机存档空间有限。'); return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      pendingCover = String(reader.result || '');
+      paintEpCover();
+      markSwatch();
+      flashErr(els.editErr, '');
+    };
+    reader.onerror = function () { flashErr(els.editErr, '读取图片失败，请换一张再试。'); };
+    reader.readAsDataURL(f);
+  });
+  els.clearCover.addEventListener('click', function () {
+    pendingCover = '';
+    els.coverFile.value = '';
+    paintEpCover();
+    markSwatch();
+    flashErr(els.editErr, '');
+  });
+
+  els.editSave.addEventListener('click', function () {
+    var name = els.eName.value.trim();
+    if (!name) { flashErr(els.editErr, '先给作品起一个名字。'); els.eName.focus(); return; }
+    work.n = name;
+    work.i = els.eIntro.value.trim();
+    work.c = pendingCov;
+    if (pendingCover === '') delete work.cover;
+    else if (typeof pendingCover === 'string' && pendingCover.indexOf('data:image/') === 0) work.cover = pendingCover;
+    if (!saveStore()) {
+      flashErr(els.editErr, '本机存储空间不足，试试更小的封面图，或移除封面图后再保存。');
+      return;
+    }
+    closeEdit();
+    renderPage();
+    flashSaved();
+  });
+
+  /* ── 添加 / 删除章节 ────────────────────────────────────────── */
+  function openChModal() {
+    els.chName.value = '';
+    flashErr(els.chErr, '');
+    els.chModal.hidden = false;
+    setTimeout(function () { els.chName.focus(); }, 30);
+  }
+  function closeChModal() { els.chModal.hidden = true; }
+
+  els.addChBtn.addEventListener('click', openChModal);
+  els.chCancel.addEventListener('click', closeChModal);
+  els.chModal.addEventListener('click', function (e) { if (e.target === els.chModal) closeChModal(); });
+  els.chSave.addEventListener('click', function () {
+    var t = els.chName.value.trim();
+    if (!t) { flashErr(els.chErr, '先写一个章节名。'); els.chName.focus(); return; }
+    if (!Array.isArray(work.ch)) work.ch = [];
+    work.ch.push({ t: t, at: Date.now() });
+    if (!saveStore()) { work.ch.pop(); flashErr(els.chErr, '本机存储空间不足，章节未保存。'); return; }
+    closeChModal();
+    renderChapters();
+    flashSaved();
+  });
+  els.chName.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); els.chSave.click(); }
+  });
+
+  function openChapterAt(i) {
+    var chs = chapters();
+    if (i < 0 || i >= chs.length) return;
+    window.location.href = 'qibi-studio.html';
+  }
+  els.chList.addEventListener('click', function (e) {
+    var del = e.target.closest && e.target.closest('[data-ch-del]');
+    if (del) {
+      var di = parseInt(del.getAttribute('data-ch-del'), 10);
+      var chs = chapters();
+      if (isNaN(di) || di < 0 || di >= chs.length) return;
+      if (!confirm('从目录中删除「' + (chs[di].t || ('第 ' + (di + 1) + ' 章')) + '」？')) return;
+      chs.splice(di, 1);
+      saveStore();
+      renderChapters();
+      flashSaved();
+      return;
+    }
+    var row = e.target.closest && e.target.closest('[data-ch]');
+    if (!row) return;
+    openChapterAt(parseInt(row.getAttribute('data-ch'), 10));
+  });
+  els.chList.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var row = e.target.closest && e.target.closest('[data-ch]');
+    if (!row) return;
+    e.preventDefault();
+    openChapterAt(parseInt(row.getAttribute('data-ch'), 10));
+  });
+
+  /* ── 删除作品 ───────────────────────────────────────────────── */
+  els.delBtn.addEventListener('click', function () {
+    if (!confirm('确定删除《' + titleOf() + '》？作品资料与目录都将移除，此操作不可撤销。')) return;
+    var pos = store.works.indexOf(work);
+    if (pos < 0) pos = idx;
+    store.works.splice(pos, 1);
+    saveStore();
+    window.location.href = 'ai-novel-editor-home.html#works';
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    if (!els.editModal.hidden) closeEdit();
+    if (!els.chModal.hidden) closeChModal();
+  });
+
+  renderPage();
+  if (QB_PROJ) {
+    fetch('/api/projects/' + QB_PROJ).then(function (r) { return r.json(); }).then(function (p) {
+      if (!p || !p.id) return;
+      work = {
+        n: p.title, intro: p.intro || '', cover: p.cover || '',
+        ch: (p.chapters || []).map(function (c) { return { t: c.title || '未命名', body: c.content || '' }; })
+      };
+      store.works = [work]; idx = 0;
+      renderPage();
+    }).catch(function () { });
+  }
+})();
+</script>
+  <script src="qibi-avatar.js?v=3"></script>
+</body>
+</html>

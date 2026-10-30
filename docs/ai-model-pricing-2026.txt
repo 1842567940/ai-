@@ -1,0 +1,56 @@
+
+厂商	代表模型	上下文	输入 / 输出（每百万 tokens）	备注
+OpenAI	GPT-5.6 Sol / Terra / Luna；GPT-5.5；GPT-5.4；GPT-4.1 / 4.1 mini；o4-mini；GPT-OSS 120B	200K–400K（GPT-5.x）；1M（GPT-4.1 系）	GPT-5.5 约 $5.5/$22 量级；GPT-4.1 mini $0.40/$1.60；o4-mini $1.10/$4.40；GPT-OSS 120B $0.15/$0.60	GPT-OSS 为开放权重系列，可通过 Together AI 等平台调用
+Anthropic	Claude Opus 4.7；Claude Sonnet 4.7；Claude Haiku 4.5；Claude Sonnet 4.5	1M（Opus / Sonnet 4.7）；200K（Haiku / Sonnet 4.5）	Opus 4.7：$5 / $25（全 1M 窗口平价）；Sonnet 4.7 同价；Haiku 4.5 约 $1/$5	Opus 4.7 为 2026 年 4 月旗舰，支持 adaptive thinking
+Google	Gemini 3 Ultra；Gemini 3.1 Pro；Gemini 3.5 Flash；Gemini 3.5 Flash-Lite	1M–2M	3.5 Flash：$1.50 / $9.00；3.1 Pro 约 $1.25 / $10	3.5 Flash 定位高性价比 agentic / 编程模型，部分版本为 128K 上下文
+xAI	Grok 4.5；Grok 4.20	未完全公开	未完全公开	2026 年主要迭代型号
+Meta	Llama 4 Maverick；Llama 4 Scout	128K–1M（Maverick）；最高 10M（Scout 部分渠道）	Scout 低至 $0.08–$0.15 输入；Maverick 约 $0.35–$1.41 输入，因平台差异大	开放权重，多云分发，价格高度依赖推理平台
+Mistral AI	Mistral 系列旗舰 / OCR / Robostral Navigate	视型号	视型号	欧洲主要厂商，部分型号开源
+国内厂商
+厂商	代表模型	上下文	输入 / 输出（每百万 tokens）	备注
+阿里巴巴	Qwen 3.8 Max；Qwen 3.8 Omni Flash；Qwen 3.7 Plus；Qwen 3.5；Qwen3 32B	最高约 983K–1M	3.8 Max：$1.65 / $4.95；3.7 Plus：$0.28 / $1.10；3.5 约 ¥0.8（≈$0.11）	Qwen 系列覆盖闭源旗舰到开放权重，3.5 以极低价格著称
+DeepSeek	DeepSeek V4 Pro；DeepSeek V4.1 Flash；DeepSeek V3	约 1M–1.05M（V4 系）；128K（V3）	V4 Pro：$1.32 / $3.96；V4.1 Flash：$0.30 / $1.20；V3：$0.25 / $1.10	V4 系为 2026 年主力，V3 仍为高性价比经典
+月之暗面	Kimi K3	1M	¥20 / ¥100（约 $3 / $15）；缓存命中 ¥2	2.8 万亿参数 MoE，原生视觉理解
+智谱 AI	GLM-5	200K	$1.00 / $3.20（部分渠道 $0.95 / $2.55）	744B 总参数 / 40B 激活，稀疏 MoE，开源友好
+MiniMax	MiniMax M3；MiniMax M2.5	524K（M3）；128K（M2.5）	M3：$0.30 / $1.20	M3 为较新迭代，M2.5 为 230B MoE
+字节跳动	豆包系列语言模型	视型号	视型号	常与火山引擎生态捆绑，中文场景优化
+二、云端生图大模型
+国际厂商
+模型	厂商	核心优势	定价参考	部署方式
+GPT Image 2 / 2.5 Sunburst	OpenAI	文字渲染、指令遵循综合最强；SuperCLUE 中文文生图总榜第一（86.40），汉字生成 93.07 分	按质量档位 per-image；CocoLoop 约 $0.06/张（GPT-img2）	闭源，仅 API / ChatGPT 生态
+Nano Banana 2 / 2.1 / Pro	Google	图像 SOTA 之一，SuperCLUE 紧随 GPT Image 2；2.1 启用 Thinking 后 Elo 提升明显	约 $0.04/张（Nano Banana 2）	闭源，Gemini API / Vertex AI
+Midjourney V8	Midjourney	审美与风格化天花板；V8 生成速度提升约 5 倍，支持原生 2K	订阅制 $10/月起	闭源，Discord / Web
+FLUX.1 / Flux Pro 2 / Flux 2	Black Forest Labs	开放权重中写实与指令遵循领先；Pro 2 部分开源	Pro 2 约 $0.055/张；FLUX.1 schnell 为 Apache 2.0 可自托管	闭源 Pro + 开放权重并行
+Stable Diffusion 4 / 3.5	Stability AI	开源生态最成熟，SD 4 将开源天花板推近闭源旗舰	社区许可，年收入 <100 万美元免费；自托管或 API	开放权重 + 商用许可
+Imagen 4	Google	与 Google Cloud 深度集成，文字渲染较强	per-image，Gemini / Vertex AI 计费	闭源 API
+Ideogram 3.0	Ideogram	图内文字、平面设计、Logo / 海报场景强	$0.0375–$0.1125/张；订阅 $7–$42/月	闭源，Web / API
+Recraft V3	Recraft	品牌风格一致性、SVG 矢量生成	栅格约 $0.04/张，矢量约 $0.08/张；订阅 $10–$48/月	闭源，Web / API
+国内厂商
+模型	厂商	核心优势	定价 / 部署
+Seedream 5.0 / Doubao-Seedream	字节跳动	多模态编辑与性价比；SuperCLUE 中文约 75.65 分	闭源 API / 火山引擎
+ERNIE-Image	百度	8B 开源模型，LongText-Bench 长文本渲染全球开源第一（0.9733），消费级显卡可跑	开放权重
+Qwen-Image 2.0 Pro / 3.0	阿里巴巴	中文理解与多模态编辑，3.0 为预览版闭源	闭源 API / 阿里云
+Hunyuan / 混元生图	腾讯	中文场景生成	闭源 API / 腾讯云
+Kolors	快手	中文写实与人像风格	闭源 API
+生图选型速记：追求文字渲染和指令遵循优先看 GPT Image 2 / Ideogram 3.0；追求审美风格化看 Midjourney V8；需要开放权重或自托管看 FLUX.1 / SD 4；做品牌矢量素材看 Recraft V3；中文长文本渲染可关注 ERNIE-Image。
+
+三、云端 TTS 大模型
+TTS 领域在 2026 年已分化为传统专用 TTS 与端到端语音大模型两条路线。下表以云端 API 可用者为主。
+
+专用 TTS / 语音大模型
+模型	厂商	中文表现	延迟	定价	特点
+ElevenLabs v3	ElevenLabs	优秀	约 450ms+（国内需代理）	约 ¥2.1/千字；$0.30/千字符（CocoLoop）	情感表现天花板，支持 [laughs] [whispers] 内联标签，70+ 语言
+火山引擎 TTS（豆包 Seed-TTS）	字节跳动 / 火山引擎	自然度 9/10，方言/口语 98%+	300–400ms（流式）；端到端可低至 ~60ms	约 ¥1.3/千字	国内低延迟首选，支持流式、SSML、声音克隆、人声+音乐+音效
+Azure TTS	Microsoft	良好	~120ms	免费层 50 万字符/月；超出 ¥0.10/千字	免费额度大、延迟极低，700+ 音色，SSML 完整
+OpenAI TTS	OpenAI	良	约 400ms+（需代理）	¥0.10/千字	API 极简，中文音色约 10 种，适合快速原型
+Google TTS / Gemini TTS	Google	良好	600ms+（需代理/海外）	¥0.11/千字；免费层 100 万字符/月	70+ 语言、30 预置音色、200+ 音频标签；不支持流式
+MiniMax Speech 2.8 / 2.6	MiniMax	优秀	~300ms	HD 约 ¥3.5/万字符；Turbo 约 ¥2/万字符；官方 $100/M / $60/M 字符	低延迟、节奏稳定，支持声音复刻与设计
+Qwen-Audio 3.0 TTS Plus / Flash	阿里巴巴	中文优化	视部署	闭源 API	阿里云语音大模型系列
+GPT-Live-1 / GPT-4o Audio	OpenAI	良（约 8% 回复轻微卡顿）	端到端语音模型	与 GPT API 合并计费	128K 语音上下文，100+ 语言，与 GPT 生态深度绑定
+Cartesia Sonic 3.5 / Sonic-3	Cartesia	视语言	~85–90ms TTFB	约 $20/百万字符	实时语音 agent 最低延迟档，WebSocket 流式极快
+PlayHT / PlayAI Dialog 1.0	PlayHT（已被 Meta 收购，业务逐步收拢）	角色音色库强	~180ms	约 $25/百万字符；$39/月起	娱乐角色配音见长，但 PlayHT 品牌已进入 PlayAI 过渡期
+端到端语音大模型（可覆盖 TTS 场景）
+模型	厂商	定位	关键规格
+豆包 Seed-TTS 2.0 / Doubao-Audio	字节跳动	中文实时语音对话 + 影视级音频制作	端到端最低 ~60ms，深度语义理解，多人多音色
+Gemini 3.1 Flash TTS	Google	可控多语言 TTS	70+ 语言、30 音色、200+ 标签；Artificial Analysis ELO 1211；不支持流式
+GPT-4o / 4.5 Audio；GPT-Live	OpenAI	端到端语音大模型标杆	128K 语音上下文，100+ 语言，表现力非最强项但生态整合深

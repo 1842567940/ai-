@@ -1,0 +1,9 @@
+{
+  "port": 9300,
+  "deepseekBase": "https://api.deepseek.com",
+  "deepseekKey": "",
+  "deepseekModel": "deepseek-flash",
+  "qwenBase": "https://maas.qianwenaiapi.com/compatible-mode/v1",
+  "qwenKey": "",
+  "qwenModel": "qwen-image-3.0-pro"
+}

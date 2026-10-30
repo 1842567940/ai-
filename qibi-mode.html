@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>启笔 QIBI · 模式开局台</title>
+<link rel="icon" type="image/png" href="app-icon.png" />
+<style>
+  /* ─── 模式开局台 ─────────────────────────────────────────────────────
+       选好「模式」后先进入这张开局台：它不是写作台，而是一块可玩的
+       起点。左侧竖排的是本模式自己的面板（开局 / 属性 / 人物 / 事件 /
+       设定 / 自由），中栏是一键创作与本模式的特色，右栏铺开该模式的
+       特色面板——属性、人物、事件、抉择。同一套夜色水墨的底子。 */
+  :root {
+    --bg:      oklch(15% 0.010 262);
+    --surface: oklch(23% 0.011 262);
+    --fg:      oklch(94% 0.006 90);
+    --muted:   oklch(73% 0.010 90);
+    --border:  oklch(96% 0.006 90 / 0.13);
+    --accent:  oklch(55% 0.17 28);
+
+    --ink-soft:      oklch(96% 0.006 90 / 0.055);
+    --ink-hair:      oklch(96% 0.006 90 / 0.16);
+    --ink-dash:      oklch(96% 0.006 90 / 0.26);
+    --accent-soft:   oklch(60% 0.17 28 / 0.17);
+    --accent-line:   oklch(62% 0.17 28 / 0.44);
+    --accent-ink:    oklch(98% 0.008 30);
+    --accent-deep:   oklch(47% 0.16 28);
+    --accent-bright: oklch(73% 0.15 32);
+    --scrim:         oklch(11% 0.012 262);
+
+    --font-display: 'Iowan Old Style', 'Charter', Georgia, 'Songti SC', 'STSong', 'Source Han Serif SC', 'Noto Serif SC', 'SimSun', serif;
+    --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    --font-mono:    ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+
+    --r-sm: 9px; --r-md: 12px; --r-lg: 15px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; overflow: hidden;
+    background: var(--bg); color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 14px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  .bg-photo {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: var(--bg) url("%E6%B0%B4%E5%A2%A8%E5%B0%91%E5%A5%B3-%E5%A4%9C%E8%89%B2.png") center / cover no-repeat;
+  }
+  .bg-scrim {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      linear-gradient(180deg, oklch(9% 0.012 262 / 0.05), transparent 60%, oklch(10% 0.012 262 / 0.03)),
+      linear-gradient(103deg, oklch(8% 0.012 262 / 0.05) 0%, oklch(10% 0.012 262 / 0.02) 52%, oklch(12% 0.012 262 / 0) 100%);
+  }
+  img, svg { display: block; max-width: 100%; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  h1, h2, h3, p { margin: 0; }
+  ::selection { background: var(--accent-soft); }
+
+  /* ─── shell ─────────────────────────────────────────────────────── */
+  .workbench {
+    position: relative; z-index: 1; height: 100vh;
+    display: grid;
+    grid-template-columns: 66px 306px minmax(0, 1fr);
+    grid-template-rows: 60px minmax(0, 1fr);
+  }
+  .appbar {
+    grid-column: 1 / -1; grid-row: 1;
+    display: flex; align-items: center; gap: 14px; padding: 0 20px 0 22px;
+    border-bottom: 1px solid var(--border);
+    background: var(--scrim);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; flex: none; }
+  .app-icon { width: 38px; height: 38px; flex: none; border-radius: 9px; object-fit: contain;
+    box-shadow: 0 1px 3px oklch(0% 0 0 / 0.45), 0 0 0 1px var(--border); }
+  .brand-name { font-family: var(--font-display); font-size: 17px; font-weight: 600; letter-spacing: 0.02em; line-height: 1.1; }
+  .brand-sub { display: block; font-family: var(--font-mono); font-size: 9px; color: var(--muted); letter-spacing: 0.14em; margin-top: 1px; }
+  .crumb { display: flex; align-items: center; gap: 8px; flex: none; padding-left: 14px; border-left: 1px solid var(--border); font-size: 12.5px; color: var(--muted); }
+  .crumb-cur { color: var(--fg); font-weight: 500; }
+  .appbar-right { display: flex; align-items: center; gap: 10px; flex: none; margin-left: auto; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 8px 15px; border-radius: var(--r-sm);
+    background: transparent; border: 1px solid var(--border); font-size: 13.5px; font-weight: 500;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.05s ease;
+  }
+  .btn:hover { background: var(--ink-soft); border-color: var(--ink-hair); }
+  .btn:active { transform: translateY(1px); }
+  .btn svg { width: 15px; height: 15px; }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn-primary:hover { background: var(--accent-deep); border-color: var(--accent-deep); }
+  .btn-sm { padding: 6px 12px; font-size: 12.5px; }
+  :where(.btn, .rail-btn, .choice, .bar, .stat-b, .seg-b, .step-b, .cast-del, .ref-del, .ref-add):focus-visible {
+    outline: 2px solid var(--accent-bright); outline-offset: 2px;
+  }
+
+  /* left rail — one panel of the mode per button */
+  .rail {
+    grid-column: 1; grid-row: 2;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    padding: 12px 0 14px; overflow: hidden;
+    border-right: 1px solid var(--border);
+    background: color-mix(in oklch, var(--scrim) 34%, transparent);
+  }
+  .rail-btn {
+    width: 54px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 8px 0; border-radius: 12px; border: 1px solid transparent;
+    background: transparent; color: var(--muted);
+    font-size: 10px; letter-spacing: 0.02em;
+    transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+  }
+  .rail-btn svg { width: 19px; height: 19px; }
+  .rail-btn:hover { background: var(--ink-soft); color: var(--fg); }
+  .rail-btn.is-active { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-bright); }
+  .rail-spacer { flex: 1; }
+
+  /* middle column — the mode itself */
+  .side { grid-column: 2; grid-row: 2; min-height: 0; display: flex; flex-direction: column;
+    border-right: 1px solid var(--border); background: color-mix(in oklch, var(--scrim) 44%, transparent); }
+  .side-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 17px 6px;
+    scrollbar-width: thin; scrollbar-color: var(--ink-hair) transparent; }
+  .side-scroll::-webkit-scrollbar { width: 8px; }
+  .side-scroll::-webkit-scrollbar-thumb { background: var(--ink-hair); border-radius: 999px; }
+  .side-head { padding-bottom: 14px; margin-bottom: 4px; border-bottom: 1px solid var(--border); }
+  .mtag { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em;
+    color: var(--accent-bright); border: 1px solid var(--accent-line); border-radius: 999px; padding: 3px 10px; }
+  .mname { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: 0.03em; margin: 11px 0 6px; }
+  .mlead { font-size: 12.5px; color: var(--muted); line-height: 1.65; }
+  .sec { padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .sec:last-of-type { border-bottom: 0; }
+  .sec-h { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 13.5px;
+    font-weight: 600; letter-spacing: 0.06em; margin-bottom: 11px; }
+  .sec-n { margin-left: auto; font-family: var(--font-mono); font-size: 10px; color: var(--muted); font-weight: 400; letter-spacing: 0.08em; }
+  .feats { display: flex; flex-wrap: wrap; gap: 7px; }
+  .feat { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--ink-soft); font-size: 12px; color: var(--fg); }
+  .feat svg { width: 13px; height: 13px; color: var(--accent-bright); }
+  .side-foot { flex: none; padding: 14px 17px 16px; border-top: 1px solid var(--border);
+    background: color-mix(in oklch, var(--scrim) 40%, transparent); }
+  .side-foot .btn { width: 100%; }
+  .side-foot .note { margin-top: 9px; font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+  /* 一键创作 controls */
+  .seg { display: inline-flex; padding: 3px; gap: 3px; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--ink-soft); width: 100%; }
+  .seg-b { flex: 1; border: 0; background: transparent; color: var(--muted); font-size: 12.5px; padding: 6px 10px; border-radius: 7px; transition: background 0.14s ease, color 0.14s ease; }
+  .seg-b.is-on { background: var(--accent); color: var(--accent-ink); }
+  .brow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .blabel { font-size: 12px; color: var(--muted); }
+  .stepper { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; }
+  .stepper input { width: 54px; border: 0; outline: 0; background: var(--surface); color: var(--fg); font: inherit; font-size: 13px; text-align: center; padding: 6px 4px; }
+  .step-b { border: 0; background: transparent; color: var(--muted); width: 28px; align-self: stretch; font-size: 15px; transition: background 0.14s ease, color 0.14s ease; }
+  .step-b:hover { background: var(--ink-soft); color: var(--fg); }
+  .bin { width: 82px; font: inherit; font-size: 12.5px; color: var(--fg); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 6px 9px; }
+  .bin:focus { outline: 0; border-color: var(--accent-line); box-shadow: 0 0 0 2px var(--accent-soft); }
+
+  /* 参考资料 */
+  .refs { display: flex; flex-direction: column; gap: 8px; }
+  .ref-row { display: flex; align-items: center; gap: 7px; }
+  .ref-row .rt { flex: none; font-family: var(--font-mono); font-size: 10px; color: var(--accent-bright); border: 1px solid var(--accent-line); border-radius: 6px; padding: 5px 8px; background: var(--accent-soft); }
+  .ref-row input { flex: 1; min-width: 0; font: inherit; font-size: 12.5px; color: var(--fg); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 7px 9px; }
+  .ref-row input:focus { outline: 0; border-color: var(--accent-line); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .ref-del { flex: none; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); display: grid; place-items: center; transition: color 0.14s ease, border-color 0.14s ease; }
+  .ref-del:hover { color: var(--accent-bright); border-color: var(--accent-line); }
+  .ref-del svg { width: 13px; height: 13px; }
+  .ref-empty { font-size: 12px; color: var(--muted); border: 1px dashed var(--ink-dash); border-radius: var(--r-sm); padding: 12px; text-align: center; }
+  .ref-add { margin-top: 9px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: var(--r-sm);
+    border: 1px dashed var(--ink-dash); background: transparent; color: var(--muted); font-size: 12.5px; transition: color 0.14s ease, border-color 0.14s ease; }
+  .ref-add:hover { color: var(--fg); border-color: var(--ink-hair); }
+  .ref-add svg { width: 14px; height: 14px; }
+
+  /* right column — the play surface */
+  .main { grid-column: 3; grid-row: 2; min-height: 0; overflow-y: auto; padding: 20px 26px 26px;
+    background: color-mix(in oklch, var(--scrim) 46%, transparent);
+    scrollbar-width: thin; scrollbar-color: var(--ink-hair) transparent; }
+  .main::-webkit-scrollbar { width: 9px; }
+  .main::-webkit-scrollbar-thumb { background: var(--ink-hair); border-radius: 999px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; align-items: start; }
+  .card { display: flex; flex-direction: column; gap: 13px; padding: 16px 17px 17px; border-radius: var(--r-md);
+    border: 1px solid var(--border); background: color-mix(in oklch, var(--surface) 40%, transparent); }
+  .card-wide { grid-column: 1 / -1; }
+  .card-h { display: flex; align-items: center; gap: 9px; }
+  .ci { width: 28px; height: 28px; border-radius: 8px; flex: none; display: grid; place-items: center; background: var(--ink-soft); color: var(--muted); }
+  .ci svg { width: 15px; height: 15px; }
+  .ct { font-family: var(--font-display); font-size: 14.5px; font-weight: 600; letter-spacing: 0.04em; }
+  .ch { font-size: 11.5px; color: var(--muted); }
+  .cbtn { margin-left: auto; }
+
+  .banner { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 7px; padding: 22px 24px; border-radius: var(--r-lg);
+    border: 1px solid var(--border);
+    background: linear-gradient(103deg, color-mix(in oklch, var(--scrim) 60%, transparent), color-mix(in oklch, var(--accent-soft) 55%, transparent)); }
+  .banner .b-tag { align-self: flex-start; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; color: var(--accent-bright); }
+  .banner h1 { font-family: var(--font-display); font-size: 27px; font-weight: 600; letter-spacing: 0.04em; }
+  .banner p { font-size: 13px; color: var(--muted); max-width: 64ch; line-height: 1.68; }
+
+  .attr-row { display: flex; align-items: center; gap: 12px; }
+  .attr-l { flex: none; width: 92px; font-size: 12.5px; color: var(--muted); }
+  .attr-row input { flex: 1; min-width: 0; font: inherit; font-size: 12.5px; color: var(--fg); background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--r-sm); padding: 7px 10px; }
+  .attr-row input:focus { outline: 0; border-color: var(--accent-line); box-shadow: 0 0 0 2px var(--accent-soft); }
+
+  .meter { display: flex; align-items: center; gap: 12px; }
+  .meter-l { flex: none; width: 92px; font-size: 12.5px; color: var(--muted); }
+  .meter-bars { display: flex; gap: 3px; flex: 1; min-width: 0; }
+  .bar { flex: 1; height: 10px; border: 0; border-radius: 3px; background: var(--ink-soft); padding: 0;
+    transition: background 0.12s ease; }
+  .bar:hover { background: var(--ink-hair); }
+  .bar.is-on { background: var(--accent); }
+  .meter-v { flex: none; width: 54px; text-align: right; font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); }
+
+  .stat-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .stat-row:last-child { border-bottom: 0; }
+  .stat-l { flex: 1; min-width: 0; font-size: 12.5px; color: var(--fg); }
+  .stat-b { width: 26px; height: 26px; flex: none; border-radius: 7px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 14px; display: grid; place-items: center; }
+  .stat-b:hover { background: var(--ink-soft); color: var(--fg); }
+  .stat-v { flex: none; width: 40px; text-align: center; font-family: var(--font-mono); font-size: 13px; color: var(--fg); }
+
+  .spacer { height: 5px; }
+  .choice-list { display: flex; flex-direction: column; gap: 11px; }
+  .event-t { font-family: var(--font-display); font-size: 14px; font-weight: 600; letter-spacing: 0.03em; color: var(--fg); }
+  .choices { display: flex; flex-direction: column; gap: 9px; }
+  .choice { display: flex; align-items: flex-start; gap: 11px; width: 100%; text-align: left; padding: 11px 13px; border-radius: var(--r-sm);
+    border: 1px solid var(--border); background: var(--ink-soft); color: var(--fg); font-size: 13px; line-height: 1.5;
+    transition: background 0.14s ease, border-color 0.14s ease; }
+  .choice:hover { border-color: var(--ink-hair); }
+  .choice.is-on { border-color: var(--accent-line); background: var(--accent-soft); }
+  .choice i { flex: none; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font-family: var(--font-mono);
+    font-size: 11px; font-style: normal; background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+  .choice.is-on i { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+  .feed { display: flex; flex-direction: column; gap: 8px; }
+  .feed-row { display: flex; gap: 10px; align-items: flex-start; padding: 9px 11px; border-radius: var(--r-sm);
+    border: 1px solid var(--border); background: var(--ink-soft); }
+  .feed-tk { flex: none; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--accent-bright);
+    border: 1px solid var(--accent-line); border-radius: 999px; padding: 2px 8px; }
+  .feed-tx { font-size: 12.5px; line-height: 1.55; color: var(--fg); }
+  .feed-empty { font-size: 12px; color: var(--muted); border: 1px dashed var(--ink-dash); border-radius: var(--r-sm); padding: 16px; text-align: center; }
+
+  .cast-list { display: flex; flex-direction: column; gap: 10px; }
+  .cast-row { display: flex; align-items: center; gap: 14px; padding: 11px 12px; border: 1px solid var(--border);
+    border-radius: var(--r-sm); background: color-mix(in oklch, var(--surface) 40%, transparent); }
+  .cast-role { flex: none; width: 74px; font-family: var(--font-display); font-size: 12.5px; font-weight: 600; color: var(--accent-bright); }
+  .cast-in { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .cast-in input { width: 100%; font: inherit; font-size: 12.5px; color: var(--fg); background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--r-sm); padding: 6px 9px; }
+  .cast-in input:focus { outline: 0; border-color: var(--accent-line); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .cast-aff { flex: none; display: flex; align-items: center; gap: 7px; }
+  .cast-aff .meter-bars { width: 84px; flex: none; }
+  .cast-del { flex: none; width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--border); background: transparent;
+    color: var(--muted); display: grid; place-items: center; transition: color 0.14s ease, border-color 0.14s ease; }
+  .cast-del:hover { color: var(--accent-bright); border-color: var(--accent-line); }
+  .cast-del svg { width: 13px; height: 13px; }
+
+  .rule-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .rule-row:last-child { border-bottom: 0; }
+  .rule-l { flex: none; width: 180px; font-size: 12.5px; color: var(--fg); }
+  .roster-name { flex: 1; min-width: 0; font-size: 12.5px; color: var(--muted); }
+  .rule-row input { flex: 1; min-width: 0; font: inherit; font-size: 12.5px; color: var(--fg); background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--r-sm); padding: 7px 10px; }
+  .rule-row input:focus { outline: 0; border-color: var(--accent-line); box-shadow: 0 0 0 2px var(--accent-soft); }
+
+  .free-box { display: flex; flex-direction: column; gap: 10px; }
+  .free-box textarea { width: 100%; min-height: 88px; resize: vertical; font: inherit; font-size: 13px; line-height: 1.6;
+    color: var(--fg); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 11px 12px; }
+  .free-box textarea:focus { outline: 0; border-color: var(--accent-line); box-shadow: 0 0 0 2px var(--accent-soft); }
+  .free-ops { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; }
+  .free-note { font-size: 11px; color: var(--muted); }
+
+  /* ─── adapt ─────────────────────────────────────────────────────── */
+  @media (max-height: 720px) {
+    .main { padding: 14px 18px 18px; }
+    .side-scroll { padding: 14px 14px 6px; }
+  }
+  @media (max-width: 1080px) {
+    .workbench { grid-template-columns: 66px minmax(0, 1fr); }
+    .side { display: none; }
+    .main { grid-column: 2; }
+  }
+  @media (max-width: 760px) {
+    body { overflow: auto; }
+    .workbench { height: auto; min-height: 100vh; grid-template-columns: 60px minmax(0, 1fr); }
+    .main { overflow: visible; }
+    .cards { grid-template-columns: minmax(0, 1fr); }
+    .bg-photo, .bg-scrim { position: absolute; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="bg-photo" aria-hidden="true"></div>
+<div class="bg-scrim" aria-hidden="true"></div>
+
+<div class="workbench">
+
+  <header class="appbar" data-od-id="appbar">
+    <a class="brand" href="ai-novel-editor-home.html">
+      <img class="app-icon" src="app-icon.png" width="38" height="38" alt="" />
+      <span>
+        <span class="brand-name">启笔</span>
+        <span class="brand-sub">QIBI · AI 小说编辑器</span>
+      </span>
+    </a>
+    <nav class="crumb" data-od-id="breadcrumb">
+      <span>工作台</span>
+      <span>/</span>
+      <span>模式</span>
+      <span>/</span>
+      <span class="crumb-cur" id="crumbMode">自由创作</span>
+    </nav>
+    <div class="appbar-right">
+      <a class="btn" href="ai-novel-editor-home.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7v9h-6v-6h-4v6H4z"/></svg>
+        返回工作台
+      </a>
+      <button class="btn btn-primary btn-sm" type="button" id="topEnter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        进入创作
+      </button>
+    </div>
+  </header>
+
+  <nav class="rail" data-od-id="rail" aria-label="模式面板">
+    <button class="rail-btn is-active" type="button" data-sec="start" aria-pressed="true" title="开局">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 21V4M6 4h11l-2.4 3.5L17 11H6"/></svg>
+      <span>开局</span>
+    </button>
+    <button class="rail-btn" type="button" data-sec="attr" aria-pressed="false" title="属性">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 7h14M5 12h14M5 17h14"/><circle cx="9" cy="7" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="8" cy="17" r="1.6"/></svg>
+      <span>属性</span>
+    </button>
+    <button class="rail-btn" type="button" data-sec="cast" aria-pressed="false" title="人物">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg>
+      <span>人物</span>
+    </button>
+    <button class="rail-btn" type="button" data-sec="event" aria-pressed="false" title="事件">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13 3 5.5 13H11l-1 8 7.5-10H12z"/></svg>
+      <span>事件</span>
+    </button>
+    <button class="rail-btn" type="button" data-sec="world" aria-pressed="false" title="设定">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>
+      <span>设定</span>
+    </button>
+    <button class="rail-btn" type="button" data-sec="free" aria-pressed="false" title="自由">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>
+      <span>自由</span>
+    </button>
+    <span class="rail-spacer"></span>
+    <a class="rail-btn" href="ai-novel-editor-home.html" title="工作台">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h5v12H4zM9 7h5v12H9z"/><path d="M15.4 8.4l3.8 1-3 10.6-3.8-1z"/></svg>
+      <span>作品</span>
+    </a>
+  </nav>
+
+  <aside class="side" data-od-id="mode-summary">
+    <div class="side-scroll">
+      <div class="side-head">
+        <span class="mtag" id="modeTag">模式</span>
+        <h1 class="mname" id="modeName">自由创作</h1>
+        <p class="mlead" id="modeLead">—</p>
+      </div>
+
+      <section class="sec" data-od-id="side-feats">
+        <div class="sec-h">本模式特色</div>
+        <div class="feats" id="featChips"></div>
+      </section>
+
+      <section class="sec" data-od-id="side-create">
+        <div class="sec-h">一键创作</div>
+        <div class="seg" id="spanSeg">
+          <button type="button" class="seg-b is-on" data-span="chapters">创作 N 章</button>
+          <button type="button" class="seg-b" data-span="book">直接写整本</button>
+        </div>
+        <div class="brow" id="countRow">
+          <span class="blabel">章节数</span>
+          <span class="stepper">
+            <button type="button" class="step-b" data-step="-1" aria-label="减少章节数">−</button>
+            <input id="bmN" type="number" min="1" max="300" value="3" aria-label="章节数" />
+            <button type="button" class="step-b" data-step="1" aria-label="增加章节数">+</button>
+          </span>
+          <span class="blabel">每章约</span>
+          <input id="bmW" class="bin" type="number" min="500" max="20000" step="500" value="3000" aria-label="每章字数" />
+          <span class="blabel">字</span>
+        </div>
+      </section>
+
+      <section class="sec" data-od-id="side-refs">
+        <div class="sec-h">参考资料 <span class="sec-n" id="refN">0 条</span></div>
+        <div class="refs" id="refList"></div>
+        <button type="button" class="ref-add" id="addRef">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>
+          添加参考资料
+        </button>
+      </section>
+    </div>
+    <div class="side-foot">
+      <button class="btn btn-primary" type="button" id="enterBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        开始这部作品
+      </button>
+      <p class="note" id="sideNote">—</p>
+    </div>
+  </aside>
+
+  <main class="main" id="console" data-od-id="console"></main>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── 每个模式都有自己的玩法：面板 / 属性 / 人物 / 开局事件 / 规则 ─── */
+  var PROFILES = [
+    { t: /穿书|穿越|重生|快穿|诸天|万界|位面|平行时空|未来模拟|自传/,
+      tag: '穿越改写', tagline: '带着记忆进入书中世界，改写既有剧情与人物命运。',
+      panel: '改写进度', stats: [['已改事件', 0], ['章节点', 0], ['已收情报', 0]],
+      attrs: ['姓名', '身份', '原著身份', '所处节点', '当前目标'],
+      meters: ['剧情偏离度', '关键人物好感', '危险度'],
+      cast: ['主角', '原著主角', '关键配角', '暗线角色'],
+      event: { title: '开局节点 · 你刚穿进书中世界', choices: ['先按原著走下去，摸清局势', '立刻改动一个关键剧情', '先确认自己的身份与能力'] },
+      rules: ['穿越规则（时间 / 记忆 / 能力限制）', '必改名场面清单', '原著剧情线要点', '金手指与代价'] },
+
+    { t: /系统|无限流|任务面板/,
+      tag: '系统流', tagline: '任务面板驱动，成长与奖励皆有据可依。',
+      panel: '系统面板', stats: [['等级', 1], ['积分', 0], ['剩余任务', 0], ['可加点', 0]],
+      attrs: ['姓名', '宿主等级', '当前任务', '任务进度', '奖励'],
+      meters: ['体力', '精神力', '好感度'],
+      cast: ['宿主', '系统', '队友', '幕后'],
+      event: { title: '任务发布 · 系统首次激活', choices: ['接受主线任务', '先看任务奖励再决定', '拒绝任务，试探系统底线'] },
+      rules: ['系统规则与惩罚', '任务与奖励体系', '商城兑换表', '属性加点规则'] },
+
+    { t: /修仙|仙侠|修真|洪荒|封神|玄幻|高武|灵气复苏|异能|御兽/,
+      tag: '修仙玄幻', tagline: '境界飞升、宗门争锋，劫难相随。',
+      panel: '境界体系', stats: [['当前境界', 0], ['道行', 0], ['功法', 0], ['灵宝', 0]],
+      attrs: ['姓名', '道号', '宗门', '境界', '灵根'],
+      meters: ['灵力', '声望', '因果'],
+      cast: ['主角', '师尊', '同门', '宿敌'],
+      event: { title: '入道之始 · 你踏上了修行之路', choices: ['拜入名门，稳扎稳打', '散修游历，广结机缘', '另辟蹊径，走罕见的道'] },
+      rules: ['境界与突破条件', '宗门与势力', '丹药法宝体系', '气运与因果'] },
+
+    { t: /武侠|江湖|剑客|门派|侠/,
+      tag: '武侠江湖', tagline: '侠客恩仇、门派纷争与道义抉择。',
+      panel: '武学境界', stats: [['内力', 0], ['武学', 0], ['兵器', 0], ['声望', 0]],
+      attrs: ['姓名', '门派', '身份', '兵器', '绝学'],
+      meters: ['内力', '江湖声望', '仇怨'],
+      cast: ['主角', '师父', '同门', '对头'],
+      event: { title: '初入江湖 · 你踏进第一座江湖客栈', choices: ['仗义出手，结交豪杰', '低调行事，暗中打探', '先找个落脚处再说'] },
+      rules: ['门派谱系与武功', '兵器与器物', '江湖规矩与道义', '恩仇与势力关系'] },
+
+    { t: /机甲|星际|科幻|赛博|硬科幻|星/,
+      tag: '科幻星际', tagline: '跨越星系的文明、战争与未来科技。',
+      panel: '科技与航行', stats: [['科技等级', 0], ['航程', 0], ['舰船', 0], ['资源', 0]],
+      attrs: ['姓名', '身份', '所属势力', '舰船', '任务'],
+      meters: ['能量', '声望', '威胁等级'],
+      cast: ['主角', '舰长', '同伴', '敌对势力'],
+      event: { title: '首次跃迁 · 你的舰船即将跳入深空', choices: ['按既定航线前往目标星系', '偏离航线，去查一则异常信号', '先补给整顿，再做打算'] },
+      rules: ['星图与航路', '科技树与边界', '舰船与装备', '势力版图'] },
+
+    { t: /末世|废土|丧尸|末日/,
+      tag: '末世废土', tagline: '废墟中求生、结盟与重建。',
+      panel: '基地与生存', stats: [['基地等级', 0], ['人口', 0], ['物资', 0], ['防御', 0]],
+      attrs: ['姓名', '身份', '据点', '状态', '目标'],
+      meters: ['饱食度', '健康', '危险度'],
+      cast: ['主角', '队友', '幸存者', '威胁'],
+      event: { title: '灾变第一日 · 你在废墟中醒来', choices: ['先找食物和水', '搜刮武器防身', '寻找其他幸存者'] },
+      rules: ['资源与生存规则', '基地建设', '异变生物图鉴', '势力与据点'] },
+
+    { t: /历史|权谋|王朝|三国|战国|皇帝|将门|谋士|宫斗|宅斗|架空|谍战/,
+      tag: '历史权谋', tagline: '朝堂博弈、势力推演与暗线交错。',
+      panel: '势力与官职', stats: [['官阶', 0], ['势力', 0], ['声望', 0], ['亲信', 0]],
+      attrs: ['姓名', '身份', '官职', '阵营', '谋略'],
+      meters: ['权势', '圣眷', '树敌'],
+      cast: ['主角', '君主', '盟友', '政敌'],
+      event: { title: '朝堂初立 · 你第一次站上权力棋局', choices: ['依附强势一方，借势而起', '保持中立，暗中布局', '直言进谏，博取圣心'] },
+      rules: ['朝堂势力与官职', '历史年表', '势力关系图', '暗线与情报线'] },
+
+    { t: /言情|恋爱|甜宠|虐恋|暗恋|青梅|双向|追妻|先婚|破镜|心动/,
+      tag: '言情恋爱', tagline: '情感线与关系推进，节点清晰、心动可数。',
+      panel: '情感线', stats: [['亲密度', 0], ['心动事件', 0], ['误会', 0], ['解锁剧情', 0]],
+      attrs: ['姓名', '身份', '性格', '与主角关系', '关系状态'],
+      meters: ['好感', '信任', '心动值'],
+      cast: ['主角', '恋人', '情敌', '助攻'],
+      event: { title: '初遇 · 你与 TA 第一次相遇', choices: ['主动上前搭话', '远远看着，先观察', '擦肩而过，留个悬念'] },
+      rules: ['人物关系图', '情感节点与节拍', '心动事件清单', '关系状态变化'] },
+
+    { t: /都市|豪门|隐婚|契约|团宠|马甲|千金|白月光|替身|校园|娱乐圈|职场|商战|神豪|鉴宝|美食|战神|兵王|医生|律师/,
+      tag: '都市情感', tagline: '都市烟火里的人情、身份与反转。',
+      panel: '身份与资源', stats: [['等级', 0], ['财力', 0], ['人脉', 0], ['名声', 0]],
+      attrs: ['姓名', '身份', '职业', '隐藏身份', '目标'],
+      meters: ['好感', '威望', '危机'],
+      cast: ['主角', '对手', '盟友', '关键人物'],
+      event: { title: '身份初显 · 你的另一重身份即将被察觉', choices: ['主动坦白，掌握主动', '继续隐瞒，借力周旋', '将计就计，反将一军'] },
+      rules: ['人物关系图', '身份揭示节奏', '关键事件清单', '情感线'] },
+
+    { t: /悬疑|推理|侦探|罪案|密室|犯罪|灵异|诡秘|盗墓|怪谈|克苏鲁|恐怖/,
+      tag: '悬疑推理', tagline: '线索埋设、节奏控制与层层反转。',
+      panel: '案件档案', stats: [['线索', 0], ['嫌疑人', 0], ['已破案件', 0], ['疑点', 0]],
+      attrs: ['姓名', '身份', '所在地点', '掌握线索', '当前推断'],
+      meters: ['危险度', '理智', '真相进度'],
+      cast: ['主角', '搭档', '嫌疑人', '真凶'],
+      event: { title: '第一具尸体 · 案件由此展开', choices: ['先封锁现场，保护证据', '立刻盘问在场所有人', '先梳理死者的人际关系'] },
+      rules: ['案件档案', '线索板', '嫌疑人关系', '真相脉络'] },
+
+    { t: /军事|战争|特战|抗战|冒险|探险|求生|逃杀|生存/,
+      tag: '军事冒险', tagline: '任务、战术与生死一线。',
+      panel: '任务与编制', stats: [['任务进度', 0], ['物资', 0], ['队伍', 0], ['战功', 0]],
+      attrs: ['姓名', '军衔 / 身份', '所属', '任务', '装备'],
+      meters: ['体力', '士气', '危险度'],
+      cast: ['主角', '队长', '队友', '敌方'],
+      event: { title: '任务受命 · 你接到一项九死一生的任务', choices: ['按原计划正面执行', '另寻路线，出其不意', '先侦察，摸清敌情'] },
+      rules: ['编制与阵营', '路线与战术', '关键战役', '人物档案'] },
+
+    { t: /种田|田园|经营|生活流|日常流/,
+      tag: '种田经营', tagline: '一亩三分地，慢慢把日子过成事业。',
+      panel: '经营面板', stats: [['资金', 0], ['产业', 0], ['规模', 0], ['收成', 0]],
+      attrs: ['姓名', '身份', '营生', '地点', '目标'],
+      meters: ['收支', '口碑', '忙碌度'],
+      cast: ['主角', '邻人', '伙计', '同行'],
+      event: { title: '归园第一日 · 你决定从零开始', choices: ['先整地开荒', '先去集市摸行情', '先拜访邻里打好关系'] },
+      rules: ['经营数据', '时间线', '人物关系', '日常事件'] },
+
+    { t: /单元|群像|双线|多视角|反套路|脑洞|沙雕|无厘头/,
+      tag: '叙事结构', tagline: '设定先行、结构出彩，越离谱越上瘾。',
+      panel: '结构面板', stats: [['单元数', 0], ['线索', 0], ['反转', 0], ['视角', 0]],
+      attrs: ['姓名', '身份', '所处单元', '结构位置', '当前谜面'],
+      meters: ['脑洞度', '节奏', '悬念'],
+      cast: ['主角', '参演者', '旁白', '隐藏角色'],
+      event: { title: '单元开篇 · 一个离谱的设定就此展开', choices: ['顺势把设定推到极致', '先立个反差，再反转', '一本正经地开始胡说八道'] },
+      rules: ['多线结构', '视角分配', '事件单元', '反转清单'] },
+
+    { t: /爽文|逆袭|打脸|无敌|扮猪|废柴|爆款|快节奏|爽|长篇|短篇|系列|同人|综漫|轻小说|现实|成长|家庭|治愈/,
+      tag: '爽文节奏', tagline: '节奏拉满、即时反馈与打脸快感。',
+      panel: '爽点面板', stats: [['爽点', 0], ['打脸', 0], ['节奏', 0], ['追读率', 0]],
+      attrs: ['姓名', '身份', '现状', '底牌', '目标'],
+      meters: ['期待值', '压力', '打脸力度'],
+      cast: ['主角', '对手', '贵人', '围观群众'],
+      event: { title: '先抑后扬 · 你正处在最低谷', choices: ['当场亮出底牌，直接打脸', '隐忍一时，把账记下', '先弄清谁在背后使坏'] },
+      rules: ['爽点节拍', '打脸清单', '成长曲线', '期待感管理'] }
+  ];
+  var PROFILE_DEFAULT = {
+    t: null, tag: '自由创作', tagline: '空白起笔，不设题材与框架，一切由你定。',
+    panel: '作品面板', stats: [['章节', 0], ['字数', 0], ['完成度', 0]],
+    attrs: ['书名', '主角', '题材', '基调', '核心设定'],
+    meters: ['进度', '篇幅', '完成度'],
+    cast: ['主角', '配角', '反派', '旁白'],
+    event: { title: '起笔 · 你想从哪一个画面开始？', choices: ['一个悬念开场', '一段人物登场', '一场景象描写'] },
+    rules: ['世界观', '人物设定', '情节大纲', '素材与灵感']
+  };
+  function profileOf(name) {
+    for (var i = 0; i < PROFILES.length; i++) { if (PROFILES[i].t.test(name)) return PROFILES[i]; }
+    return PROFILE_DEFAULT;
+  }
+
+  var MOD_LABEL = { files: '文稿', people: '人物', lore: '设定', mats: '素材', notes: '笔记' };
+  var REF_TYPES = ['文档', '链接', '原作', '设定'];
+  var CONSOLE_KEY = 'qibi.mode.console';
+  var DRAFT_KEY = 'qibi.mode.draft';
+  var LETTERS = ['A', 'B', 'C', 'D', 'E'];
+
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function each(list, fn) { Array.prototype.forEach.call(list, fn); }
+  function $(id) { return document.getElementById(id); }
+
+  /* ── state ───────────────────────────────────────────────────────── */
+  var QB_PROJ = ''; try { QB_PROJ = new URLSearchParams(location.search).get('project') || localStorage.getItem('qibi.project') || ''; } catch (e) { }
+  var S = {
+    mode: '自由创作', kind: 'modes', lead: '', tag: '', tagline: '', panel: '',
+    sec: 'start',
+    attrLabels: [], meterLabels: [], statDefs: [],
+    attrs: {}, meters: {}, stats: {},
+    cast: [], castRoles: [],
+    event: { title: '', choices: [], choice: -1 },
+    rules: [], ruleVals: {},
+    logs: [],
+    mods: [], tpls: [], refs: [],
+    n: 3, w: 3000, span: 'chapters'
+  };
+
+  function readJSON(key) { try { var r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
+  function writeJSON(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {} }
+
+  function initFromProfile(p) {
+    S.tag = p.tag; S.tagline = p.tagline; S.panel = p.panel;
+    S.attrLabels = p.attrs.slice(); S.meterLabels = p.meters.slice(); S.statDefs = p.stats.slice();
+    S.attrs = {}; S.meters = {}; S.stats = {}; S.ruleVals = {};
+    each(p.stats, function (d) { S.stats[d[0]] = d[1]; });
+    S.castRoles = p.cast.slice();
+    S.cast = p.cast.map(function (role) { return { role: role, name: '', note: '', aff: 0 }; });
+    S.event = { title: p.event.title, choices: p.event.choices.slice(), choice: -1 };
+    S.rules = p.rules.slice();
+    S.logs = [];
+  }
+
+  function boot() {
+    var d = readJSON(DRAFT_KEY) || {};
+    S.mode = d.mode || '自由创作';
+    S.kind = d.kind || 'modes';
+    S.lead = d.lead || '';
+    S.span = d.span === 'book' ? 'book' : 'chapters';
+    S.n = d.n || 3; S.w = d.w || 3000;
+    S.mods = Array.isArray(d.mods) ? d.mods.slice() : [];
+    S.tpls = Array.isArray(d.tpls) ? d.tpls.slice() : [];
+    initFromProfile(profileOf(S.mode));
+
+    var saved = readJSON(CONSOLE_KEY);
+    if (saved && saved.mode === S.mode) {
+      if (saved.attrs) S.attrs = saved.attrs;
+      if (saved.meters) S.meters = saved.meters;
+      if (saved.stats) S.stats = saved.stats;
+      if (saved.ruleVals) S.ruleVals = saved.ruleVals;
+      if (Array.isArray(saved.cast) && saved.cast.length) S.cast = saved.cast;
+      if (saved.event && saved.event.title) S.event = saved.event;
+      if (Array.isArray(saved.logs)) S.logs = saved.logs;
+      if (Array.isArray(saved.refs)) S.refs = saved.refs;
+      if (saved.span) S.span = saved.span;
+      if (saved.n) S.n = saved.n; if (saved.w) S.w = saved.w;
+      if (saved.sec) S.sec = saved.sec;
+    } else if (Array.isArray(d.refs)) {
+      S.refs = d.refs.map(function (r) { return { t: r.t || '文档', v: r.v || '' }; });
+    }
+  }
+  function save() {
+    writeJSON(CONSOLE_KEY, {
+      mode: S.mode, span: S.span, n: S.n, w: S.w, sec: S.sec,
+      attrs: S.attrs, meters: S.meters, stats: S.stats, ruleVals: S.ruleVals,
+      cast: S.cast, event: S.event, logs: S.logs, refs: S.refs
+    });
+  }
+
+  /* ── builders ────────────────────────────────────────────────────── */
+  var ICONS = {
+    attr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 7h14M5 12h14M5 17h14"/></svg>',
+    people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/></svg>',
+    bolt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13 3 5.5 13H11l-1 8 7.5-10H12z"/></svg>',
+    gauge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-5"/></svg>',
+    globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17"/></svg>',
+    feed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 6h14M5 12h14M5 18h9"/></svg>',
+    compass: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>',
+    dice: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="15" r="1"/><circle cx="9" cy="15" r="1"/></svg>'
+  };
+
+  function cardHead(icon, title, hint, action) {
+    return '<div class="card-h"><span class="ci">' + icon + '</span>'
+      + '<span class="ct">' + esc(title) + '</span>'
+      + (hint ? '<span class="ch">' + esc(hint) + '</span>' : '')
+      + (action || '') + '</div>';
+  }
+  function bars(kind, key, value, max) {
+    var h = '';
+    for (var i = 1; i <= max; i++) {
+      h += '<button type="button" class="bar' + (i <= value ? ' is-on' : '') + '" data-' + kind + '="' + esc(key) + '" data-v="' + i + '" aria-label="' + i + '"></button>';
+    }
+    return h;
+  }
+  function metersHtml() {
+    return S.meterLabels.map(function (label) {
+      var v = S.meters[label] || 0;
+      return '<div class="meter"><span class="meter-l">' + esc(label) + '</span>'
+        + '<span class="meter-bars">' + bars('meter', label, v, 10) + '</span>'
+        + '<span class="meter-v">' + (v ? v * 10 + '%' : '未设定') + '</span></div>';
+    }).join('');
+  }
+  function attrsHtml() {
+    return S.attrLabels.map(function (label) {
+      return '<label class="attr-row"><span class="attr-l">' + esc(label) + '</span>'
+        + '<input type="text" data-attr="' + esc(label) + '" value="' + esc(S.attrs[label] || '') + '" placeholder="留白" /></label>';
+    }).join('');
+  }
+  function statsHtml() {
+    return S.statDefs.map(function (d) {
+      var label = d[0], v = S.stats[label] || 0;
+      return '<div class="stat-row"><span class="stat-l">' + esc(label) + '</span>'
+        + '<button type="button" class="stat-b" data-stat="' + esc(label) + '" data-d="-1" aria-label="减少">−</button>'
+        + '<b class="stat-v">' + v + '</b>'
+        + '<button type="button" class="stat-b" data-stat="' + esc(label) + '" data-d="1" aria-label="增加">+</button></div>';
+    }).join('');
+  }
+  function eventHtml() {
+    var out = '<div class="choice-list">';
+    out += '<p class="event-t">' + esc(S.event.title) + '</p>';
+    out += '<div class="choices">';
+    S.event.choices.forEach(function (c, i) {
+      out += '<button type="button" class="choice' + (S.event.choice === i ? ' is-on' : '') + '" data-choice="' + i + '">'
+        + '<i>' + LETTERS[i] + '</i><span>' + esc(c) + '</span></button>';
+    });
+    out += '</div></div>';
+    return out;
+  }
+  function feedEntries() {
+    var arr = [];
+    if (S.event.choice >= 0) arr.push({ tk: '抉择', text: S.event.choices[S.event.choice] });
+    each(S.logs, function (l) { arr.push(l); });
+    return arr;
+  }
+  function feedHtml(emptyText) {
+    var arr = feedEntries();
+    if (!arr.length) return '<div class="feed-empty">' + esc(emptyText) + '</div>';
+    return '<div class="feed">' + arr.map(function (e) {
+      return '<div class="feed-row"><span class="feed-tk">' + esc(e.tk) + '</span>'
+        + '<span class="feed-tx">' + esc(e.text) + '</span></div>';
+    }).join('') + '</div>';
+  }
+  function castRowHtml(c, i) {
+    return '<div class="cast-row"><span class="cast-role">' + esc(c.role) + '</span>'
+      + '<span class="cast-in">'
+      + '<input type="text" data-cast-name="' + i + '" value="' + esc(c.name) + '" placeholder="姓名 · 留白" aria-label="姓名" />'
+      + '<input type="text" data-cast-note="' + i + '" value="' + esc(c.note) + '" placeholder="一句话设定" aria-label="设定" />'
+      + '</span>'
+      + '<span class="cast-aff"><span class="meter-bars">' + bars('aff', i, c.aff, 5) + '</span></span>'
+      + '<button type="button" class="cast-del" data-cast-del="' + i + '" aria-label="移除">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>';
+  }
+  function rulesHtml() {
+    return S.rules.map(function (label) {
+      return '<div class="rule-row"><span class="rule-l">' + esc(label) + '</span>'
+        + '<input type="text" data-rule="' + esc(label) + '" value="' + esc(S.ruleVals[label] || '') + '" placeholder="留白" /></div>';
+    }).join('');
+  }
+
+  /* ── render main ─────────────────────────────────────────────────── */
+  function render() {
+    var el = $('console');
+    var p = '';
+    if (S.sec === 'start') {
+      p += '<div class="banner" data-od-id="m-banner"><span class="b-tag">' + esc(S.tag) + '</span>'
+        + '<h1>' + esc(S.mode) + '</h1><p>' + esc(S.tagline) + '</p></div>';
+      p += '<section class="card card-wide" data-od-id="m-event">'
+        + cardHead(ICONS.bolt, '开局事件', '选择一条走向，作品随之分叉') + eventHtml() + '</section>';
+      p += '<section class="card" data-od-id="m-status">'
+        + cardHead(ICONS.attr, '角色属性', '点选分段即可设定') + attrsHtml() + '<div class="spacer"></div>' + metersHtml() + '</section>';
+      p += '<section class="card" data-od-id="m-roster">'
+        + cardHead(ICONS.people, '人物速览', '主要角色登场', '<button type="button" class="btn btn-sm cbtn" data-gosec="cast">管理</button>')
+        + '<div class="cast-list">' + S.cast.slice(0, 3).map(function (c) {
+          return '<div class="rule-row"><span class="rule-l">' + esc(c.role) + '</span>'
+            + '<span class="roster-name">' + (c.name ? esc(c.name) : '未命名') + '</span></div>';
+        }).join('') + '</div></section>';
+    } else if (S.sec === 'attr') {
+      p += '<section class="card card-wide" data-od-id="m-attrs">'
+        + cardHead(ICONS.attr, '角色属性', '为该模式量身的字段') + attrsHtml() + '</section>';
+      p += '<section class="card" data-od-id="m-meters">'
+        + cardHead(ICONS.gauge, '状态 / 关系', '每格 10%，点当前格即可清零') + metersHtml() + '</section>';
+      p += '<section class="card" data-od-id="m-panel">'
+        + cardHead(ICONS.dice, S.panel, '本模式专属面板') + statsHtml() + '</section>';
+    } else if (S.sec === 'cast') {
+      p += '<section class="card card-wide" data-od-id="m-cast">'
+        + cardHead(ICONS.people, '人物', '一族一人，好感由你亲手调',
+          '<button type="button" class="btn btn-sm cbtn" data-cast-add="1">'
+          + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>加一位</button>')
+        + '<div class="cast-list">' + S.cast.map(castRowHtml).join('') + '</div></section>';
+    } else if (S.sec === 'event') {
+      p += '<section class="card card-wide" data-od-id="m-event">'
+        + cardHead(ICONS.bolt, '事件抉择', '每一次选择都会改写后续') + eventHtml() + '</section>';
+      p += '<section class="card card-wide" data-od-id="m-feed">'
+        + cardHead(ICONS.feed, '抉择记录', '你走过的分叉') + feedHtml('还没有做出抉择。') + '</section>';
+    } else if (S.sec === 'world') {
+      p += '<section class="card card-wide" data-od-id="m-rules">'
+        + cardHead(ICONS.globe, '规则与设定', '本模式的骨架，可逐条补全') + rulesHtml() + '</section>';
+    } else if (S.sec === 'free') {
+      p += '<section class="card card-wide" data-od-id="m-free">'
+        + cardHead(ICONS.compass, '自由行动', '不受面板限制，想做什么就写什么')
+        + '<div class="free-box">'
+        + '<textarea id="freeIn" placeholder="例如：先不动声色地打量四周，记下每个可疑的人。"></textarea>'
+        + '<div class="free-ops"><button type="button" class="btn btn-primary btn-sm" data-act="1">'
+        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6"/></svg>推演这一步</button>'
+        + '<span class="free-note">进入创作后，AI 会据此衔接正文。</span></div></div></section>';
+      p += '<section class="card card-wide" data-od-id="m-flow">'
+        + cardHead(ICONS.feed, '行动流', '这一次次的行动，就是你的剧情') + feedHtml('还没有行动记录。') + '</section>';
+    }
+    el.innerHTML = '<div class="cards">' + p + '</div>';
+  }
+
+  /* ── render side ─────────────────────────────────────────────────── */
+  function renderFeats() {
+    var feats = [S.panel];
+    each(S.mods, function (m) { if (MOD_LABEL[m]) feats.push(MOD_LABEL[m] + '面板'); });
+    var uniq = [];
+    each(feats, function (f) { if (f && uniq.indexOf(f) < 0) uniq.push(f); });
+    $('featChips').innerHTML = uniq.map(function (f) {
+      return '<span class="feat">' + ICONS.bolt + esc(f) + '</span>';
+    }).join('');
+  }
+  function renderRefs() {
+    var box = $('refList');
+    $('refN').textContent = S.refs.length + ' 条';
+    if (!S.refs.length) { box.innerHTML = '<div class="ref-empty">可添加原作、设定文档或链接</div>'; return; }
+    box.innerHTML = S.refs.map(function (r, i) {
+      return '<div class="ref-row"><button type="button" class="rt" data-ref-type="' + i + '" title="切换类型">' + esc(r.t) + '</button>'
+        + '<input type="text" value="' + esc(r.v) + '" placeholder="名称、链接或说明" data-ref-in="' + i + '" aria-label="参考资料" />'
+        + '<button type="button" class="ref-del" data-ref-del="' + i + '" aria-label="删除">'
+        + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>';
+    }).join('');
+  }
+  function updateSide() {
+    $('modeTag').textContent = S.kind === 'viral' ? '爆款模板' : '模式';
+    $('modeName').textContent = S.mode;
+    $('modeLead').textContent = S.lead || S.tagline;
+    $('crumbMode').textContent = S.mode;
+    var book = S.span === 'book';
+    $('countRow').style.display = book ? 'none' : '';
+    each($('spanSeg').querySelectorAll('.seg-b'), function (b) { b.classList.toggle('is-on', b.getAttribute('data-span') === S.span); });
+    var bits = [book ? '按整本长篇起稿' : ('先写 ' + S.n + ' 章 · 每章约 ' + S.w + ' 字')];
+    if (S.refs.length) bits.push('参考资料 ' + S.refs.length + ' 条');
+    bits.push('特色面板 ' + (1 + S.mods.length) + ' 个');
+    $('sideNote').textContent = '将新建《未命名作品》 · ' + bits.join(' · ');
+    if ($('bmN')) $('bmN').value = S.n;
+    if ($('bmW')) $('bmW').value = S.w;
+  }
+
+  /* ── section switching ───────────────────────────────────────────── */
+  function setSec(sec) {
+    S.sec = sec; save();
+    each(document.querySelectorAll('.rail-btn[data-sec]'), function (b) {
+      var on = b.getAttribute('data-sec') === sec;
+      b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    render();
+  }
+  each(document.querySelectorAll('.rail-btn[data-sec]'), function (b) {
+    b.addEventListener('click', function () { setSec(b.getAttribute('data-sec')); });
+  });
+
+  /* ── console interactions (delegated) ────────────────────────────── */
+  var main = $('console');
+  main.addEventListener('click', function (e) {
+    var t = e.target;
+    var go = t.closest && t.closest('[data-gosec]');
+    if (go) { setSec(go.getAttribute('data-gosec')); return; }
+
+    var b = t.closest && t.closest('[data-meter],[data-aff],[data-stat],[data-choice],[data-cast-add],[data-cast-del],[data-act]');
+    if (!b) return;
+    var v;
+
+    if (b.hasAttribute('data-meter')) {
+      var ml = b.getAttribute('data-meter'); v = parseInt(b.getAttribute('data-v'), 10);
+      S.meters[ml] = (S.meters[ml] === v) ? 0 : v; save(); render(); return;
+    }
+    if (b.hasAttribute('data-aff')) {
+      var ci = parseInt(b.getAttribute('data-aff'), 10); v = parseInt(b.getAttribute('data-v'), 10);
+      if (S.cast[ci]) { S.cast[ci].aff = (S.cast[ci].aff === v) ? 0 : v; save(); render(); }
+      return;
+    }
+    if (b.hasAttribute('data-stat')) {
+      var sl = b.getAttribute('data-stat'), d = parseInt(b.getAttribute('data-d'), 10);
+      S.stats[sl] = Math.max(0, (S.stats[sl] || 0) + d); save(); render(); return;
+    }
+    if (b.hasAttribute('data-choice')) {
+      var idx = parseInt(b.getAttribute('data-choice'), 10);
+      S.event.choice = (S.event.choice === idx) ? -1 : idx; save(); render(); return;
+    }
+    if (b.hasAttribute('data-cast-add')) {
+      var n = S.cast.length + 1;
+      S.cast.push({ role: '新角色 ' + n, name: '', note: '', aff: 0 }); save(); render(); return;
+    }
+    if (b.hasAttribute('data-cast-del')) {
+      S.cast.splice(parseInt(b.getAttribute('data-cast-del'), 10), 1); save(); render(); return;
+    }
+    if (b.hasAttribute('data-act')) {
+      var ta = $('freeIn');
+      var text = ta ? ta.value.trim() : '';
+      if (!text) return;
+      S.logs.push({ tk: '行动', text: text }); save(); render(); return;
+    }
+  });
+  main.addEventListener('input', function (e) {
+    var t = e.target, k;
+    if ((k = t.getAttribute && t.getAttribute('data-attr')) != null) { S.attrs[k] = t.value; save(); return; }
+    if ((k = t.getAttribute && t.getAttribute('data-cast-name')) != null) { S.cast[+k].name = t.value; save(); return; }
+    if ((k = t.getAttribute && t.getAttribute('data-cast-note')) != null) { S.cast[+k].note = t.value; save(); return; }
+    if ((k = t.getAttribute && t.getAttribute('data-rule')) != null) { S.ruleVals[k] = t.value; save(); return; }
+  });
+
+  /* ── side controls ───────────────────────────────────────────────── */
+  $('spanSeg').addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-span]');
+    if (!b) return;
+    S.span = b.getAttribute('data-span'); save(); updateSide();
+  });
+  each(document.querySelectorAll('.step-b'), function (b) {
+    b.addEventListener('click', function () {
+      var d = parseInt(b.getAttribute('data-step'), 10);
+      S.n = Math.max(1, Math.min(300, (S.n || 1) + d)); save(); updateSide();
+    });
+  });
+  $('bmN').addEventListener('input', function () { S.n = Math.max(1, parseInt(this.value, 10) || 1); save(); updateSide(); });
+  $('bmW').addEventListener('input', function () { S.w = Math.max(500, parseInt(this.value, 10) || 3000); save(); updateSide(); });
+  $('addRef').addEventListener('click', function () {
+    S.refs.push({ t: '文档', v: '' }); save(); renderRefs(); updateSide();
+    var ins = $('refList').querySelectorAll('input'); if (ins.length) ins[ins.length - 1].focus();
+  });
+  $('refList').addEventListener('click', function (e) {
+    var del = e.target.closest && e.target.closest('[data-ref-del]');
+    if (del) { S.refs.splice(parseInt(del.getAttribute('data-ref-del'), 10), 1); save(); renderRefs(); updateSide(); return; }
+    var tp = e.target.closest && e.target.closest('[data-ref-type]');
+    if (tp) {
+      var i = parseInt(tp.getAttribute('data-ref-type'), 10);
+      var k = REF_TYPES.indexOf(S.refs[i].t);
+      S.refs[i].t = REF_TYPES[(k + 1) % REF_TYPES.length]; save(); renderRefs(); updateSide();
+    }
+  });
+  $('refList').addEventListener('input', function (e) {
+    var inp = e.target.closest && e.target.closest('[data-ref-in]');
+    if (!inp) return;
+    S.refs[parseInt(inp.getAttribute('data-ref-in'), 10)].v = inp.value; save(); updateSide();
+  });
+
+  /* ── enter: hand the console over to the writing studio ──────────── */
+  function enter() {
+    var wantN = S.span === 'book' ? 0 : Math.max(1, S.n || 3);
+    var draft = {
+      mode: S.mode, lead: S.lead, kind: S.kind, span: S.span, n: wantN, w: S.w || 3000,
+      mods: S.mods, tpls: S.tpls.slice(),
+      refs: S.refs.filter(function (r) { return r.v.trim(); }).map(function (r) { return { t: r.t, v: r.v.trim() }; }),
+      at: Date.now()
+    };
+    writeJSON(DRAFT_KEY, draft);
+    save();
+    if (QB_PROJ) {
+      try {
+        fetch('/api/projects/' + QB_PROJ, {
+          method: 'PATCH', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ mode: S.mode })
+        });
+      } catch (e) { }
+      window.location.href = 'qibi-studio.html?project=' + encodeURIComponent(QB_PROJ);
+      return;
+    }
+    window.location.href = 'qibi-studio.html';
+  }
+  $('enterBtn').addEventListener('click', enter);
+  $('topEnter').addEventListener('click', enter);
+
+  /* ── boot ────────────────────────────────────────────────────────── */
+  boot();
+  renderFeats(); renderRefs(); updateSide();
+  setSec(S.sec || 'start');
+  if (QB_PROJ) {
+    fetch('/api/projects/' + QB_PROJ).then(function (r) { return r.json(); }).then(function (p) {
+      if (p && p.mode && p.mode !== S.mode) {
+        S.mode = p.mode;
+        try { $('crumbMode').textContent = S.mode; } catch (e) { }
+        try { boot(); renderFeats(); renderRefs(); updateSide(); setSec(S.sec || 'start'); } catch (e) { }
+      }
+    }).catch(function () { });
+  }
+})();
+</script>
+</body>
+</html>
