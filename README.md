@@ -139,26 +139,30 @@ npx electron .
 
 | 接口 | 作用 |
 |---|---|
-| `GET/POST /api/projects` | 作品列表 / 新建 |
-| `GET/PATCH/DELETE /api/projects/:id` | 单部作品的读写与删除 |
-| `POST /api/projects/:id/chapter` | 章节保存（自动建/更新本章记忆） |
-| `GET/PUT /api/projects/:id/memory` | 结构化记忆：书目、分卷、人物、设定、伏笔、状态 |
-| `POST /api/projects/:id/memory/build` | 分批蒸馏章节摘要，再逐层汇总 |
-| `POST /api/projects/:id/memory/check` | 一致性检查（人物、时间线、设定冲突） |
-| `POST /api/projects/:id/plan` | 大纲规划 |
+| `GET / POST /api/projects` | 作品列表 / 新建（自动带上第一卷与第一章） |
+| `GET / PATCH / DELETE /api/projects/:id` | 单部作品的读取、改名、删除 |
+| `GET / POST /api/projects/:id/{chapters,characters,lore,materials,notes,volumes}` | 六类集合的统一读写 |
+| `GET / PATCH / DELETE /api/projects/:id/:collection/:itemId` | 单条内容与删除 |
+| `POST /api/projects/:id/materials/bulk` | 素材批量导入 |
+| `GET / PUT /api/projects/:id/memory` | 结构化记忆：书目、分卷、章节、人物、设定、伏笔、状态、L1–L5 层级 |
+| `POST /api/projects/:id/memory/build` · `.../memory/check` | 分批蒸馏章节摘要 / 一致性检查 |
 | `POST /api/ai/chat/stream` | 对话与生成，SSE 流式返回（`text/event-stream`） |
-| `POST /api/ai/image` | 生图（Qwen Image 兼容接口） |
-| `POST /api/ai/tts` | 语音合成（调用本机 Python + `edge-tts`，缺失时降级） |
-| `POST /api/ai/search` | 联网检索辅助设定 |
-| `GET/PUT /api/settings` | 模型与偏好设置 |
-| `GET /api/stats` · `POST /api/writelog` | 写作统计与写作日志 |
-| `GET /api/backup` | 整库导出 |
+| `POST /api/ai/novel/chapter` · `.../chapter/stream` | 按「本章节拍」写整章（非流式 / 流式） |
+| `POST /api/ai/novel/plan` · `.../novel/memory` | 大纲规划 / 记忆提炼 |
+| `POST /api/ai/write` · `humanize` · `deai` | 自由写作 / 口语化 / 去 AI 味 |
+| `POST /api/ai/transmigrate` | 穿书改写 |
+| `POST /api/ai/image` · `tts` · `sfx` | 生图 / 语音合成 / 环境声 |
+| `POST /api/ai/search` · `fetch` | 联网检索 / 抓取网页正文 |
+| `GET / PUT /api/settings` | 模型与偏好设置 |
+| `GET /api/stats` · `analytics` · `writelog` | 基础统计 / 文本深度分析 / 写作日志与热力图 |
+| `POST /api/backup` | 整库备份成一份 JSON |
 
 ### 长篇记忆是怎么撑住的
 
 这是这套东西最不"界面"的部分：写到几十万字，模型不可能每次都读全文。
 
-所以保存章节时，服务端会把这一章**蒸馏成摘要**，抽出人物、设定、伏笔的变化，写进结构化记忆；
+所以保存章节后，编辑器会在 5 秒空闲时自动请求 `memory/build`，把这一章**蒸馏成摘要**，
+抽出人物、设定、伏笔的变化，写进结构化记忆（也可以手动点「重建全部记忆」或「一致性检查」）；
 生成时只挑相关的几条记忆 + 上一章尾巴拼成**上下文包**，喂给模型。章节多了再逐层向上汇总，
 避免"记忆"本身也变成一坨读不完的文本。
 
