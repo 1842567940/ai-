@@ -254,7 +254,9 @@ npx electron .
 
 ## 许可
 
-暂未指定开源许可（`package.json` 中标为 UNLICENSED）。若需商用或二次分发，请先与作者联系；需要 MIT / Apache-2.0 可自行添加 `LICENSE`。
+以 **Apache License 2.0** 发布（完整文本见仓库根目录 [`LICENSE`](LICENSE)）。
+
+可自由使用、修改与商用，保留版权与许可声明、并注明修改即可。
 
 ---
 
